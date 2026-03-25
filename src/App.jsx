@@ -1,4 +1,14 @@
 import { useState, useEffect } from "react";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  doc,
+  runTransaction,
+} from "firebase/firestore";
+import { db } from "./firebase";
 
 // 🔥 DATA
 const proteinsData = [
@@ -38,33 +48,50 @@ export default function App() {
   const [clientName, setClientName] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  const isDoubleProtein = extras.some(e => e.name === "Doble proteína");
+
+  // 🔥 TIEMPO REAL
   useEffect(() => {
-    const saved = localStorage.getItem("orders");
-    if (saved) setOrders(JSON.parse(saved));
+    const q = query(collection(db, "orders"), orderBy("orderNumber", "desc"));
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setOrders(data);
+    });
+
+    return () => unsub();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
+  // 🔢 CONTADOR GLOBAL
+  const getNextOrderNumber = async () => {
+    const ref = doc(db, "counters", "orders");
+
+    return await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+
+      let current = 0;
+      if (snap.exists()) current = Number(snap.data().value) || 0;
+
+      const newValue = current + 1;
+      transaction.set(ref, { value: newValue });
+
+      return newValue;
+    });
+  };
 
   const toggleItem = (item, list, setList) => {
     const exists = list.find(i => i.name === item.name);
-    if (exists) {
-      setList(list.filter(i => i.name !== item.name));
-    } else {
-      setList([...list, item]);
-    }
+    exists
+      ? setList(list.filter(i => i.name !== item.name))
+      : setList([...list, item]);
   };
-
-  const isDoubleProtein = extras.some(e => e.name === "Doble proteína");
 
   const itemCost = (item, isProtein = false) => {
     const base = (item.price / item.units) * item.used;
-
-    if (isProtein && isDoubleProtein) {
-      return base * 2 + base * 0.5;
-    }
-
+    if (isProtein && isDoubleProtein) return base * 2 + base * 0.5;
     return base;
   };
 
@@ -81,12 +108,13 @@ export default function App() {
 
   const salePrice = totalCost * (1 + margin);
 
-  const saveOrder = () => {
+  const saveOrder = async () => {
     if (!proteins.length) return;
 
+    const orderNumber = await getNextOrderNumber();
+
     const newOrder = {
-      id: Date.now(),
-      orderNumber: orders.length + 1,
+      orderNumber,
       clientName,
       size,
       proteins,
@@ -96,11 +124,12 @@ export default function App() {
       price: salePrice,
       margin,
       name: generateName(proteins),
-      date: new Date().toLocaleString(),
       doubleProtein: isDoubleProtein,
+      date: new Date().toLocaleString(),
     };
 
-    setOrders([newOrder, ...orders]);
+    await addDoc(collection(db, "orders"), newOrder);
+
     setProteins([]);
     setToppings([]);
     setExtras([]);
@@ -147,31 +176,27 @@ export default function App() {
 
           <p>Tamaño: {size} cm - ${sizeCost}</p>
 
-          {/* PROTEÍNAS */}
-{proteins.map(i => (
-  <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
-    <span>{i.name}</span>
-    <span>
-      x{isDoubleProtein ? i.used * 2 : i.used} | $
-      {itemCost(i, true).toFixed(0)}
-    </span>
-  </div>
-))}
+          {proteins.map(i => (
+            <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>{i.name}</span>
+              <span>
+                x{isDoubleProtein ? i.used * 2 : i.used} | ${itemCost(i, true).toFixed(0)}
+              </span>
+            </div>
+          ))}
 
-{/* INDICADOR */}
-{isDoubleProtein && (
-  <p style={{ color: "#f59e0b", fontWeight: "bold" }}>
-    🔥 Doble proteína aplicada
-  </p>
-)}
+          {isDoubleProtein && (
+            <p style={{ color: "#f59e0b", fontWeight: "bold" }}>
+              🔥 Doble proteína aplicada
+            </p>
+          )}
 
-{/* TOPPINGS + EXTRAS (SIN doble proteína) */}
-{[...toppings, ...extras.filter(e => e.name !== "Doble proteína")].map(i => (
-  <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
-    <span>{i.name}</span>
-    <span>${itemCost(i).toFixed(0)}</span>
-  </div>
-))}
+          {[...toppings, ...extras.filter(e => e.name !== "Doble proteína")].map(i => (
+            <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>{i.name}</span>
+              <span>${itemCost(i).toFixed(0)}</span>
+            </div>
+          ))}
 
           <hr />
 
@@ -189,7 +214,7 @@ export default function App() {
             <div key={order.id} onClick={() => setSelectedOrder(order)} style={{ background: "#0f172a", padding: 15, borderRadius: 10, cursor: "pointer" }}>
               <strong>Orden #{order.orderNumber}</strong>
               <p>{order.clientName}</p>
-              <p>${order.price.toFixed(0)}</p>
+              <p>${order.price?.toFixed(0)}</p>
             </div>
           ))}
         </div>
@@ -201,6 +226,7 @@ export default function App() {
 
           <div style={{ display: "flex", gap: 20 }}>
 
+            {/* CLIENTE */}
             <div style={{ background: "#fff", color: "#000", padding: 20, borderRadius: 10, fontFamily: "monospace" }}>
               <h3>🧾 Cliente</h3>
               <p>Orden #{selectedOrder.orderNumber}</p>
@@ -208,7 +234,7 @@ export default function App() {
               <p>{selectedOrder.name}</p>
 
               {selectedOrder.proteins.map((i, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
+                <div key={`${i.name}-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>{i.name}</span>
                   <span>x{selectedOrder.doubleProtein ? i.used * 2 : i.used}</span>
                 </div>
@@ -218,6 +244,7 @@ export default function App() {
               <p><strong>Total: ${selectedOrder.price.toFixed(0)}</strong></p>
             </div>
 
+            {/* VENDEDOR */}
             <div style={{ background: "#fff", color: "#000", padding: 20, borderRadius: 10, fontFamily: "monospace" }}>
               <h3>💼 Vendedor</h3>
 
@@ -226,7 +253,7 @@ export default function App() {
                 const total = selectedOrder.doubleProtein ? base * 2 + base * 0.5 : base;
 
                 return (
-                  <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div key={`${i.name}-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
                     <span>{i.name}</span>
                     <span>${total.toFixed(0)}</span>
                   </div>
@@ -260,7 +287,7 @@ function Category({ title, items, selected, setSelected, toggle, color, isSize }
 
           return (
             <button
-              key={i}
+              key={isSize ? item : item.name}
               onClick={() =>
                 isSize
                   ? setSelected(item)
