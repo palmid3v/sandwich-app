@@ -107,6 +107,7 @@ export default function App() {
     calculateCost(extras);
 
   const salePrice = totalCost * (1 + margin);
+  const hasOrder = proteins.length || toppings.length || extras.length;
 
   const saveOrder = async () => {
     if (!proteins.length) return;
@@ -160,19 +161,36 @@ export default function App() {
           <Category title="🥬 Toppings" items={toppingsData} selected={toppings} setSelected={setToppings} toggle={toggleItem} color="#22c55e" />
           <Category title="🧀 Extras" items={extrasData} selected={extras} setSelected={setExtras} toggle={toggleItem} color="#f59e0b" />
 
-          <button onClick={saveOrder} style={{ padding: 14, background: "#f59e0b", border: "none", borderRadius: 10, fontWeight: "bold" }}>
-            📦 Guardar Pedido
-          </button>
+          <button
+  onClick={saveOrder}
+  disabled={!hasOrder}
+  style={{
+    padding: 16,
+    background: hasOrder ? "#22c55e" : "#475569",
+    border: "none",
+    borderRadius: 12,
+    fontWeight: "bold",
+    fontSize: 16,
+    cursor: hasOrder ? "pointer" : "not-allowed",
+    transition: "0.2s",
+  }}
+>
+  🚀 Crear Pedido
+</button>
         </div>
 
         {/* PEDIDO */}
         <div style={{ flex: 1, background: "#0f172a", padding: 20, borderRadius: 12 }}>
           <h2>🧾 Pedido</h2>
 
-          <p><strong>Cliente:</strong> {clientName || "-"}</p>
-          <p><strong>Nombre:</strong> {generateName(proteins)}</p>
+          <div style={{ marginBottom: 10 }}>
+  <h3 style={{ margin: 0 }}>{generateName(proteins)}</h3>
+  <small style={{ color: "#94a3b8" }}>
+    Cliente: {clientName || "General"}
+  </small>
+</div>
 
-          <hr />
+          <hr style={{ borderColor: "#1e293b" }} />
 
           <p>Tamaño: {size} cm - ${sizeCost}</p>
 
@@ -198,10 +216,10 @@ export default function App() {
             </div>
           ))}
 
-          <hr />
+          <hr style={{ borderColor: "#1e293b" }} />
 
           <p>💰 Costo: ${totalCost.toFixed(0)}</p>
-          <p style={{ fontSize: 20, fontWeight: "bold" }}>💵 ${salePrice.toFixed(0)}</p>
+          <p style={{ fontSize: 32, fontWeight: "bold", color: "#22c55e" }}>💵 ${salePrice.toFixed(0)}</p>
         </div>
       </div>
 
@@ -270,7 +288,7 @@ onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
         <p>Cliente: {selectedOrder.clientName || "N/A"}</p>
         <p style={{ fontSize: 12 }}>{selectedOrder.date}</p>
 
-        <hr />
+        <hr style={{ borderColor: "#1e293b" }} />
 
         <p><strong>{selectedOrder.name}</strong></p>
 
@@ -300,13 +318,13 @@ onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
           );
         })}
 
-        <hr />
+        <hr style={{ borderColor: "#1e293b" }} />
 
         <p style={{ fontWeight: "bold", fontSize: 18 }}>
           TOTAL: ${selectedOrder.price.toFixed(0)}
         </p>
 
-        <hr />
+        <hr style={{ borderColor: "#1e293b" }} />
 
         <p style={{ textAlign: "center" }}>💳 Paga aquí</p>
 
