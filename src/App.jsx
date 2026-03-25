@@ -138,7 +138,7 @@ export default function App() {
 
   return (
     <div style={{ padding: 20, background: "#020617", color: "white", minHeight: "100vh" }}>
-      <h1 style={{ textAlign: "center", fontSize: 28 }}>🔥 Sandwich PRO Builder</h1>
+      <h1 style={{ textAlign: "center", fontSize: 28 }}>🔥 Sandwichies</h1>
 
       <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
 
@@ -206,12 +206,28 @@ export default function App() {
       </div>
 
       {/* HISTORIAL */}
-      <div style={{ marginTop: 40 }}>
+      <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 20,
+    marginTop: 20,
+  }}
+>
         <h2>📊 Historial</h2>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 15 }}>
           {orders.map(order => (
-            <div key={order.id} onClick={() => setSelectedOrder(order)} style={{ background: "#0f172a", padding: 15, borderRadius: 10, cursor: "pointer" }}>
+            <div key={order.id} onClick={() => setSelectedOrder(order)} style={{
+  background: "#0f172a",
+  padding: 15,
+  borderRadius: 12,
+  cursor: "pointer",
+  border: "1px solid #1e293b",
+  transition: "all 0.2s ease",
+}}
+onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
+onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
               <strong>Orden #{order.orderNumber}</strong>
               <p>{order.clientName}</p>
               <p>${order.price?.toFixed(0)}</p>
@@ -222,54 +238,143 @@ export default function App() {
 
       {/* MODAL */}
       {selectedOrder && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", justifyContent: "center", alignItems: "center" }}>
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.8)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 999,
+    }}
+  >
+    {/* CONTENEDOR */}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
 
-          <div style={{ display: "flex", gap: 20 }}>
+      {/* 🧾 RECIBO */}
+      <div
+        id="printable"
+        style={{
+          background: "#fff",
+          color: "#000",
+          padding: 20,
+          width: 280,
+          borderRadius: 10,
+          fontFamily: "monospace",
+        }}
+      >
+        <h2 style={{ textAlign: "center" }}>🔥 SANDWICHIES</h2>
 
-            {/* CLIENTE */}
-            <div style={{ background: "#fff", color: "#000", padding: 20, borderRadius: 10, fontFamily: "monospace" }}>
-              <h3>🧾 Cliente</h3>
-              <p>Orden #{selectedOrder.orderNumber}</p>
-              <p>{selectedOrder.clientName}</p>
-              <p>{selectedOrder.name}</p>
+        <p>Orden #{selectedOrder.orderNumber}</p>
+        <p>Cliente: {selectedOrder.clientName || "N/A"}</p>
+        <p style={{ fontSize: 12 }}>{selectedOrder.date}</p>
 
-              {selectedOrder.proteins.map((i, idx) => (
-                <div key={`${i.name}-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{i.name}</span>
-                  <span>x{selectedOrder.doubleProtein ? i.used * 2 : i.used}</span>
-                </div>
-              ))}
+        <hr />
 
-              <hr />
-              <p><strong>Total: ${selectedOrder.price.toFixed(0)}</strong></p>
+        <p><strong>{selectedOrder.name}</strong></p>
+
+        {/* ITEMS */}
+        {selectedOrder.proteins.map((i, idx) => {
+          const base = (i.price / i.units) * i.used;
+          const total = selectedOrder.doubleProtein
+            ? base * 2 + base * 0.5
+            : base;
+
+          return (
+            <div key={`${i.name}-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>{i.name}</span>
+              <span>${total.toFixed(0)}</span>
             </div>
+          );
+        })}
 
-            {/* VENDEDOR */}
-            <div style={{ background: "#fff", color: "#000", padding: 20, borderRadius: 10, fontFamily: "monospace" }}>
-              <h3>💼 Vendedor</h3>
+        {[...selectedOrder.toppings, ...selectedOrder.extras.filter(e => e.name !== "Doble proteína")].map((i, idx) => {
+          const cost = (i.price / i.units) * i.used;
 
-              {selectedOrder.proteins.map((i, idx) => {
-                const base = (i.price / i.units) * i.used;
-                const total = selectedOrder.doubleProtein ? base * 2 + base * 0.5 : base;
-
-                return (
-                  <div key={`${i.name}-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>{i.name}</span>
-                    <span>${total.toFixed(0)}</span>
-                  </div>
-                );
-              })}
-
-              <hr />
-              <p>Costo: ${selectedOrder.cost.toFixed(0)}</p>
-              <p><strong>Venta: ${selectedOrder.price.toFixed(0)}</strong></p>
+          return (
+            <div key={`${i.name}-extra-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>{i.name}</span>
+              <span>${cost.toFixed(0)}</span>
             </div>
+          );
+        })}
 
-          </div>
+        <hr />
 
-          <button onClick={() => setSelectedOrder(null)} style={{ position: "absolute", top: 20, right: 20 }}>❌</button>
-        </div>
-      )}
+        <p style={{ fontWeight: "bold", fontSize: 18 }}>
+          TOTAL: ${selectedOrder.price.toFixed(0)}
+        </p>
+
+        <hr />
+
+        <p style={{ textAlign: "center" }}>💳 Paga aquí</p>
+
+        <img
+          src="/qr.png"
+          alt="QR Pago"
+          style={{ width: "100%", marginTop: 10 }}
+        />
+
+        <p style={{ textAlign: "center", marginTop: 10 }}>
+          🙌 Gracias por tu compra
+        </p>
+      </div>
+
+      {/* BOTONES */}
+      <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
+        <button
+          onClick={() => {
+            const printContent = document.getElementById("printable").innerHTML;
+            const win = window.open("", "", "width=400,height=600");
+            win.document.write(`
+              <html>
+                <head>
+                  <title>Recibo</title>
+                  <style>
+                    body {
+                      font-family: monospace;
+                      padding: 20px;
+                    }
+                  </style>
+                </head>
+                <body>
+                  ${printContent}
+                </body>
+              </html>
+            `);
+            win.document.close();
+            win.print();
+          }}
+          style={{
+            padding: 10,
+            background: "#22c55e",
+            border: "none",
+            borderRadius: 8,
+            color: "white",
+            cursor: "pointer",
+          }}
+        >
+          🖨️ Imprimir
+        </button>
+
+        <button
+          onClick={() => setSelectedOrder(null)}
+          style={{
+            padding: 10,
+            background: "#ef4444",
+            border: "none",
+            borderRadius: 8,
+            color: "white",
+            cursor: "pointer",
+          }}
+        >
+          ❌ Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
