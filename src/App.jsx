@@ -30,12 +30,41 @@ const extrasData = [
   { name: "Doble proteína", price: 0, units: 1, used: 1 },
 ];
 
-const generateName = (proteins) => {
+const generateName = (proteins, size) => {
   const names = proteins.map(p => p.name);
-  if (names.includes("Chorizo") && names.includes("Pepperoni")) return "🔥 Explosivo";
-  if (names.includes("Jamón serrano") && names.includes("Jamón asado")) return "🥓 Doble Jamón";
-  if (names.length >= 3) return "💪 Full Protein";
-  return "🥪 Personalizado";
+
+  // 🔥 NOMBRE BASE (SIN TAMAÑO)
+  let baseName = "🥪 Personalizado";
+
+  if (names.includes("Chorizo") && names.includes("Pepperoni")) {
+    baseName = "🔥 Explosivo";
+  }
+  else if (names.includes("Jamón serrano") && names.includes("Jamón asado")) {
+    baseName = "🥓 Doble Jamón";
+  }
+  else if (names.includes("Chorizo") && names.includes("Salami")) {
+    baseName = "🌶️ Picante Especial";
+  }
+  else if (names.includes("Jamón de pavo") && names.includes("Jamón asado")) {
+    baseName = "🍗 Mix Clásico";
+  }
+  else if (names.length >= 4) {
+    baseName = "👑 Mega Protein";
+  }
+  else if (names.length === 3) {
+    baseName = "💪 Triple Protein";
+  }
+  else if (names.length === 2) {
+    baseName = "🥪 Doble Protein";
+  }
+  else if (names.length === 1) {
+    baseName = "🥪 Simple";
+  }
+
+  // 📏 TAMAÑO
+  const sizeName = size === "30" ? "Grande" : "Pequeño";
+
+  return `${baseName} ${sizeName}`;
 };
 
 export default function App() {
@@ -124,7 +153,7 @@ export default function App() {
       cost: totalCost,
       price: salePrice,
       margin,
-      name: generateName(proteins),
+      name: generateName(proteins, size),
       doubleProtein: isDoubleProtein,
       date: new Date().toLocaleString(),
     };
