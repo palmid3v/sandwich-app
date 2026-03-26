@@ -197,7 +197,7 @@ export default function OrderPage() {
           onMouseEnter={(e) => e.target.style.opacity = 0.85}
           onMouseLeave={(e) => e.target.style.opacity = 1}
         >
-          🚀 Confirmar pedido
+          🚀 Confirmar y enviar pedido
         </button>
       </div>
 
