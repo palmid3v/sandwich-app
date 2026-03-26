@@ -23,6 +23,27 @@ const extrasData = [
   { name: "Doble proteína", price: 0, units: 1, used: 1 },
 ];
 
+const itemCost = (item, isProtein = false) => {
+  const base = (item.price / item.units) * item.used;
+  if (isProtein && extras.some(e => e.name === "Doble proteína")) {
+    return base * 2 + base * 0.5;
+  }
+  return base;
+};
+
+const calculateCost = (items, isProtein = false) =>
+  items.reduce((sum, i) => sum + itemCost(i, isProtein), 0);
+
+const sizeCost = size === "30" ? 3000 : 1500;
+
+const totalCost =
+  sizeCost +
+  calculateCost(proteins, true) +
+  calculateCost(toppings) +
+  calculateCost(extras);
+
+const salePrice = totalCost * 1.75;
+
 export default function OrderPage() {
   const [size, setSize] = useState("15");
   const [proteins, setProteins] = useState([]);
@@ -45,16 +66,19 @@ export default function OrderPage() {
     }
 
     const order = {
-      clientName,
-      phone,
-      size,
-      proteins,
-      toppings,
-      extras,
-      name: generateName(proteins, size),
-      date: new Date().toLocaleString(),
-      source: "web",
-    };
+    clientName,
+    phone,
+    size,
+    proteins,
+    toppings,
+    extras,
+    name: generateName(proteins, size),
+    cost: totalCost,
+    price: salePrice,
+    margin: 0.75,
+    date: new Date().toLocaleString(),
+    source: "web",
+  };
 
     await addDoc(collection(db, "orders"), order);
 
