@@ -99,7 +99,12 @@ export default function App() {
   const isDoubleProtein = extras.some(e => e.name === "Doble proteína");
 
   const downloadReceipt = async () => {
-  const element = document.getElementById("printable");
+  const element = document.getElementById("printable-client");
+
+if (!element) {
+  console.error("No se encontró el recibo");
+  return;
+}
 
   const canvas = await html2canvas(element, {
     scale: 2, // mejor calidad 🔥
@@ -473,24 +478,26 @@ export default function App() {
       >
       {/* 🧾 RECIBO */}
       <div
-  id="printable"
-  style={{
-    display: "flex",
-    gap: 20,
-    background: "#000",
-    padding: 20,
-    borderRadius: 10,
-    flexWrap: "wrap",     // 🔥 clave responsive
-    justifyContent: "center",
-    width: "100%",
-  }}
->
+        style={{
+        display: "flex",
+        gap: 20,
+        background: "#000",
+        padding: 20,
+        borderRadius: 10,
+        flexWrap: "wrap",     // 🔥 clave responsive
+        justifyContent: "center",
+        width: "100%",
+      }}
+    >
 
   {/* 🧾 CLIENTE */}
-        <div style={{
+        <div 
+        id="printable-client"
+        style={{
         width: "100%",
         maxWidth: 260,   // 🔥 límite elegante
       }}>
+
     <h3>🧾 Cliente</h3>
 
     <p>Orden #{selectedOrder.orderNumber}</p>
@@ -583,24 +590,26 @@ export default function App() {
           >
         <button
           onClick={() => {
-            const printContent = document.getElementById("printable").innerHTML;
+            const printContent = document.getElementById("printable-client").innerHTML;
             const win = window.open("", "", "width=400,height=600");
             win.document.write(`
-              <html>
-                <head>
-                  <title>Recibo</title>
-                  <style>
-                    body {
-                      font-family: monospace;
-                      padding: 20px;
-                    }
-                  </style>
-                </head>
-                <body>
-                  ${printContent}
-                </body>
-              </html>
-            `);
+            <html>
+              <head>
+                <title>Recibo</title>
+                <style>
+                  body {
+                    font-family: monospace;
+                    padding: 20px;
+                    background: white;
+                    color: black;
+                  }
+                </style>
+              </head>
+              <body>
+                ${printContent}
+              </body>
+            </html>
+          `);
             win.document.close();
             win.print();
           }}
