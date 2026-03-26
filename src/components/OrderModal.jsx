@@ -4,7 +4,6 @@ export default function OrderModal({ selectedOrder, setSelectedOrder, downloadRe
   if (!selectedOrder) return null;
 
   return (
-    // 👉 pega aquí tu modal (SIN el {selectedOrder &&})
     
   <div
   style={{
