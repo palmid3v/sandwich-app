@@ -1,4 +1,10 @@
 import { useState, useEffect } from "react";
+import Category from "./components/Category";
+import { generateName } from "./utils/generateName";
+import { sendWhatsApp } from "./utils/whatsapp";
+import OrderModal from "./components/OrderModal";
+import OrdersHistory from "./components/OrdersHistory";
+import Dashboard from "./components/Dashboard";
 import {
   addDoc,
   collection,
@@ -31,60 +37,6 @@ const extrasData = [
   { name: "Doble proteína", price: 0, units: 1, used: 1 },
 ];
 
-const sandwichRules = [ 
-  {
-    match: ["Pepperoni", "Salami", "Chorizo"],
-    name: "💣 Carnívoro Extremo",
-  },
-  {
-    match: ["Chorizo", "Pepperoni"],
-    name: "🔥 Explosivo",
-  },
-  {
-    match: ["Jamón serrano", "Jamón asado"],
-    name: "🥓 Doble Jamón",
-  },
-  {
-    match: ["Chorizo", "Salami"],
-    name: "🌶️ Picante Especial",
-  },
-  {
-    match: ["Jamón de pavo", "Jamón asado"],
-    name: "🍗 Mix Clásico",
-  },
-];
-
-const generateName = (proteins, size) => {
-  const names = proteins.map(p => p.name);
-  const nameSet = new Set(names);
-
-  let baseName = null;
-
-  // 🔍 reglas inteligentes
-  for (const rule of sandwichRules) {
-    const matches = rule.match.every(item => nameSet.has(item));
-    if (matches) {
-      baseName = rule.name;
-      break;
-    }
-  }
-
-  // 🧠 fallback
-  if (!baseName) {
-    if (names.length >= 5) baseName = "👑 Ultra Protein";
-    else if (names.length === 4) baseName = "👑 Mega Protein";
-    else if (names.length === 3) baseName = "💪 Triple Protein";
-    else if (names.length === 2) baseName = "🥪 Doble Protein";
-    else if (names.length === 1) baseName = `🥪 ${names[0]} Especial`;
-    else baseName = "🥪 Personalizado";
-  }
-
-  // 📏 tamaño
-  const sizeName = size === "30" ? "Grande" : "Pequeño";
-
-  return `${baseName} ${sizeName}`;
-};
-
 export default function App() {
   const [size, setSize] = useState("15");
   const [proteins, setProteins] = useState([]);
@@ -93,6 +45,7 @@ export default function App() {
   const [orders, setOrders] = useState([]);
   const [margin, setMargin] = useState(0.75);
   const [clientName, setClientName] = useState("");
+  const [phone, setPhone] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeTab, setActiveTab] = useState("sandwiches");
 
@@ -118,7 +71,6 @@ if (!element) {
   link.download = `pedido-${selectedOrder.orderNumber}.png`;
   link.click();
 };
-
   // 🔥 TIEMPO REAL
   useEffect(() => {
     const q = query(collection(db, "orders"), orderBy("orderNumber", "desc"));
@@ -196,6 +148,7 @@ if (!element) {
     const newOrder = {
       orderNumber,
       clientName,
+      phone,
       size,
       proteins,
       toppings,
@@ -250,8 +203,11 @@ if (!element) {
           gap: 20,
           marginTop: 20,
           alignItems: "start",
-            }}
-            > 
+          }}
+          >
+        {activeTab === "dashboard" && (
+          <Dashboard orders={orders} />
+          )}
 
         {/* BUILDER */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 15 }}>
@@ -262,7 +218,19 @@ if (!element) {
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="Nombre del cliente"
-              style={{ width: "100%", padding: 8, borderRadius: 8, border: "none" }}
+              style={{ width: "50%", padding: 8, borderRadius: 8, border: "none" }}
+            />
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="WhatsApp (ej: 573001234567)"
+              style={{
+                width: "50%",
+                padding: 8,
+                borderRadius: 8,
+                border: "none",
+                marginTop: 8
+              }}
             />
           </div>
 
@@ -342,77 +310,20 @@ if (!element) {
       </div>
       )}
 
-      {/* HISTORIAL */}
-      {activeTab === "sandwiches" && (
-      <div style={{ marginTop: 40 }}>
-      <div style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 15
-    }}>
-    <h2>🕘 Historial de pedidos</h2>
-
-    <span style={{
-      background: "#022c22",
-      color: "#22c55e",
-      padding: "4px 10px",
-      borderRadius: 10,
-      fontSize: 12
-    }}>
-      {orders.length} pedidos
-    </span>
-  </div>
-
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-      gap: 15,
-    }}
-  >
-          {orders.map(order => (
-            <div
-    key={order.id}
-    onClick={() => setSelectedOrder(order)}
-    style={{
-      background: "#0f172a",
-      padding: 16,
-      borderRadius: 16,
-      border: "1px solid #1e293b",
-      cursor: "pointer",
-      transition: "0.2s",
-    }}
-    onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-3px)")}
-    onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-  >
-
-    <div style={{ fontSize: 12, color: "#94a3b8" }}>
-      ORDEN #{order.orderNumber}
-    </div>
-
-    <p style={{ fontWeight: "bold", margin: "6px 0" }}>
-      {order.clientName || "Cliente"}
-    </p>
-
-    <p style={{ fontSize: 12, opacity: 0.7 }}>
-      {order.name}
-    </p>
-
-    <p style={{
-      marginTop: 10,
-      fontWeight: "bold",
-      fontSize: 18,
-      color: "#22c55e"
-    }}>
-      ${order.price?.toFixed(0)}
-    </p>
-
-  </div>
-))}
-        </div>
-      </div>
-      )}
+        {activeTab === "dashboard" && (
+          <Dashboard orders={orders} />
+        )}
+        {activeTab === "sandwiches" && (
+          <OrdersHistory
+            orders={orders}
+            setSelectedOrder={setSelectedOrder}
+          />
+        )}
+      <OrderModal
+        selectedOrder={selectedOrder}
+        setSelectedOrder={setSelectedOrder}
+        downloadReceipt={downloadReceipt}
+      />
 
 {activeTab === "inventario" && (
   <div style={{ marginTop: 30 }}>
@@ -450,246 +361,6 @@ if (!element) {
 
   </div>
 )}
-
-      {/* MODAL */}
-      {selectedOrder && (
-  <div
-  style={{
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.8)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 999,
-    overflowY: "auto",          // 🔥 permite scroll
-    padding: 20,                // 🔥 espacio en móviles
-  }}
->
-      {/* CONTENEDOR */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          maxWidth: 600,   // 🔥 evita que crezca demasiado
-        }}
-      >
-      {/* 🧾 RECIBO */}
-      <div
-        style={{
-        display: "flex",
-        gap: 20,
-        background: "#000",
-        padding: 20,
-        borderRadius: 10,
-        flexWrap: "wrap",     // 🔥 clave responsive
-        justifyContent: "center",
-        width: "100%",
-      }}
-    >
-
-  {/* 🧾 CLIENTE */}
-        <div 
-        id="printable-client"
-        style={{
-        width: "100%",
-        maxWidth: 260,   // 🔥 límite elegante
-      }}>
-
-    <h3>🧾 Cliente</h3>
-
-    <p>Orden #{selectedOrder.orderNumber}</p>
-    <p>{selectedOrder.clientName}</p>
-    <p style={{ fontSize: 12 }}>{selectedOrder.date}</p>
-
-    <hr />
-
-    <strong>{selectedOrder.name}</strong>
-
-    {/* SIN PRECIOS */}
-    {selectedOrder.proteins.map((i, idx) => (
-      <div key={idx}>
-        {i.name} x{selectedOrder.doubleProtein ? i.used * 2 : i.used}
-      </div>
-    ))}
-
-    {selectedOrder.toppings.map((i, idx) => (
-      <div key={idx}>{i.name} x{i.used}</div>
-    ))}
-
-    {selectedOrder.extras
-      .filter(e => e.name !== "Doble proteína")
-      .map((i, idx) => (
-        <div key={idx}>{i.name} x{i.used}</div>
-      ))}
-
-    <hr />
-
-    <p style={{ fontWeight: "bold" }}>
-      TOTAL: ${selectedOrder.price.toFixed(0)}
-    </p>
-    <img src="/qr.png" style={{ width: "100%", marginTop: 10 }} />
-  </div>
-
-        {/* 💼 VENDEDOR */}
-          <div style={{
-          width: "100%",
-          maxWidth: 260,   // 🔥 límite elegante
-        }}>
-    <h3>💼 Vendedor</h3>
-
-    <strong>{selectedOrder.name}</strong>
-
-    {selectedOrder.proteins.map((i, idx) => {
-      const base = (i.price / i.units) * i.used;
-      const total = selectedOrder.doubleProtein
-        ? base * 2 + base * 0.5
-        : base;
-
-      return (
-        <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>{i.name}</span>
-          <span>${total.toFixed(0)}</span>
-        </div>
-      );
-    })}
-
-    {[...selectedOrder.toppings, ...selectedOrder.extras.filter(e => e.name !== "Doble proteína")].map((i, idx) => {
-      const cost = (i.price / i.units) * i.used;
-
-      return (
-        <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>{i.name}</span>
-          <span>${cost.toFixed(0)}</span>
-        </div>
-      );
-    })}
-
-    <hr />
-
-    <p>Costo: ${selectedOrder.cost.toFixed(0)}</p>
-    <p>Venta: ${selectedOrder.price.toFixed(0)}</p>
-    <p style={{ fontWeight: "bold" }}>
-      Ganancia: ${(selectedOrder.price - selectedOrder.cost).toFixed(0)}
-    </p>
-  </div>
-
-</div>
-
-      {/* BOTONES */}
-      <div
-            style={{
-              marginTop: 15,
-              display: "flex",
-              gap: 10,
-              flexWrap: "wrap",        // 🔥 no se salen
-              justifyContent: "center"
-            }}
-          >
-        <button
-          onClick={() => {
-            const printContent = document.getElementById("printable-client").innerHTML;
-            const win = window.open("", "", "width=400,height=600");
-            win.document.write(`
-            <html>
-              <head>
-                <title>Recibo</title>
-                <style>
-                  body {
-                    font-family: monospace;
-                    padding: 20px;
-                    background: white;
-                    color: black;
-                  }
-                </style>
-              </head>
-              <body>
-                ${printContent}
-              </body>
-            </html>
-          `);
-            win.document.close();
-            win.print();
-          }}
-          style={{
-            padding: 10,
-            background: "#22c55e",
-            border: "none",
-            borderRadius: 8,
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          🖨️ Imprimir
-        </button>
-
-        <button
-          onClick={() => setSelectedOrder(null)}
-          style={{
-            padding: 10,
-            background: "#ef4444",
-            border: "none",
-            borderRadius: 8,
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          ❌ Cerrar
-        </button>
-        <button
-        onClick={downloadReceipt}
-        style={{
-          padding: 10,
-          background: "#3b82f6",
-          border: "none",
-          borderRadius: 8,
-          color: "white",
-          cursor: "pointer",
-        }}
-      >
-        📲 Descargar Imagen
-      </button>
-      </div>
-    </div>
-  </div>
-)}
-    </div>
-  );
-}
-
-function Category({ title, items, selected, setSelected, toggle, color, isSize }) {
-  return (
-    <div style={{ background: "#0f172a", padding: 15, borderRadius: 12 }}>
-      <h3>{title}</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
-        {items.map((item, i) => {
-          const isSelected = isSize
-            ? selected === item
-            : selected.some(s => s.name === item.name);
-          return (
-            <button
-              key={isSize ? item : item.name}
-              onClick={() =>
-                isSize
-                  ? setSelected(item)
-                  : toggle(item, selected, setSelected)
-              }
-              style={{
-                padding: 12,
-                borderRadius: 10,
-                border: "none",
-                background: isSelected ? color || "#22c55e" : "#1e293b",
-                color: "white",
-                fontWeight: "bold",
-              }}
-            >
-              {isSize ? `${item} cm` : item.name}
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }
