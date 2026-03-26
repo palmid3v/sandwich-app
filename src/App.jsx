@@ -449,19 +449,28 @@ export default function App() {
       {/* MODAL */}
       {selectedOrder && (
   <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.8)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 999,
-    }}
-  >
-    {/* CONTENEDOR */}
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-
+  style={{
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.8)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+    overflowY: "auto",          // 🔥 permite scroll
+    padding: 20,                // 🔥 espacio en móviles
+  }}
+>
+      {/* CONTENEDOR */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          maxWidth: 600,   // 🔥 evita que crezca demasiado
+        }}
+      >
       {/* 🧾 RECIBO */}
       <div
   id="printable"
@@ -471,11 +480,17 @@ export default function App() {
     background: "#000",
     padding: 20,
     borderRadius: 10,
+    flexWrap: "wrap",     // 🔥 clave responsive
+    justifyContent: "center",
+    width: "100%",
   }}
 >
 
   {/* 🧾 CLIENTE */}
-  <div style={{ width: 250, fontFamily: "monospace" }}>
+        <div style={{
+        width: "100%",
+        maxWidth: 260,   // 🔥 límite elegante
+      }}>
     <h3>🧾 Cliente</h3>
 
     <p>Orden #{selectedOrder.orderNumber}</p>
@@ -511,8 +526,11 @@ export default function App() {
     <img src="/qr.png" style={{ width: "100%", marginTop: 10 }} />
   </div>
 
-  {/* 💼 VENDEDOR */}
-  <div style={{ width: 250, fontFamily: "monospace" }}>
+        {/* 💼 VENDEDOR */}
+          <div style={{
+          width: "100%",
+          maxWidth: 260,   // 🔥 límite elegante
+        }}>
     <h3>💼 Vendedor</h3>
 
     <strong>{selectedOrder.name}</strong>
@@ -554,7 +572,15 @@ export default function App() {
 </div>
 
       {/* BOTONES */}
-      <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
+      <div
+            style={{
+              marginTop: 15,
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",        // 🔥 no se salen
+              justifyContent: "center"
+            }}
+          >
         <button
           onClick={() => {
             const printContent = document.getElementById("printable").innerHTML;
