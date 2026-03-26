@@ -9,6 +9,7 @@ import {
   runTransaction,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import html2canvas from "html2canvas";
 
 // 🔥 DATA
 const proteinsData = [
@@ -30,38 +31,55 @@ const extrasData = [
   { name: "Doble proteína", price: 0, units: 1, used: 1 },
 ];
 
+const sandwichRules = [ 
+  {
+    match: ["Pepperoni", "Salami", "Chorizo"],
+    name: "💣 Carnívoro Extremo",
+  },
+  {
+    match: ["Chorizo", "Pepperoni"],
+    name: "🔥 Explosivo",
+  },
+  {
+    match: ["Jamón serrano", "Jamón asado"],
+    name: "🥓 Doble Jamón",
+  },
+  {
+    match: ["Chorizo", "Salami"],
+    name: "🌶️ Picante Especial",
+  },
+  {
+    match: ["Jamón de pavo", "Jamón asado"],
+    name: "🍗 Mix Clásico",
+  },
+];
+
 const generateName = (proteins, size) => {
   const names = proteins.map(p => p.name);
+  const nameSet = new Set(names);
 
-  // 🔥 NOMBRE BASE (SIN TAMAÑO)
-  let baseName = "🥪 Personalizado";
+  let baseName = null;
 
-  if (names.includes("Chorizo") && names.includes("Pepperoni")) {
-    baseName = "🔥 Explosivo";
-  }
-  else if (names.includes("Jamón serrano") && names.includes("Jamón asado")) {
-    baseName = "🥓 Doble Jamón";
-  }
-  else if (names.includes("Chorizo") && names.includes("Salami")) {
-    baseName = "🌶️ Picante Especial";
-  }
-  else if (names.includes("Jamón de pavo") && names.includes("Jamón asado")) {
-    baseName = "🍗 Mix Clásico";
-  }
-  else if (names.length >= 4) {
-    baseName = "👑 Mega Protein";
-  }
-  else if (names.length === 3) {
-    baseName = "💪 Triple Protein";
-  }
-  else if (names.length === 2) {
-    baseName = "🥪 Doble Protein";
-  }
-  else if (names.length === 1) {
-    baseName = "🥪 Simple";
+  // 🔍 reglas inteligentes
+  for (const rule of sandwichRules) {
+    const matches = rule.match.every(item => nameSet.has(item));
+    if (matches) {
+      baseName = rule.name;
+      break;
+    }
   }
 
-  // 📏 TAMAÑO
+  // 🧠 fallback
+  if (!baseName) {
+    if (names.length >= 5) baseName = "👑 Ultra Protein";
+    else if (names.length === 4) baseName = "👑 Mega Protein";
+    else if (names.length === 3) baseName = "💪 Triple Protein";
+    else if (names.length === 2) baseName = "🥪 Doble Protein";
+    else if (names.length === 1) baseName = `🥪 ${names[0]} Especial`;
+    else baseName = "🥪 Personalizado";
+  }
+
+  // 📏 tamaño
   const sizeName = size === "30" ? "Grande" : "Pequeño";
 
   return `${baseName} ${sizeName}`;
@@ -76,8 +94,25 @@ export default function App() {
   const [margin, setMargin] = useState(0.75);
   const [clientName, setClientName] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [activeTab, setActiveTab] = useState("sandwiches");
 
   const isDoubleProtein = extras.some(e => e.name === "Doble proteína");
+
+  const downloadReceipt = async () => {
+  const element = document.getElementById("printable");
+
+  const canvas = await html2canvas(element, {
+    scale: 2, // mejor calidad 🔥
+    backgroundColor: "#ffffff",
+  });
+
+  const data = canvas.toDataURL("image/png");
+
+  const link = document.createElement("a");
+  link.href = data;
+  link.download = `pedido-${selectedOrder.orderNumber}.png`;
+  link.click();
+};
 
   // 🔥 TIEMPO REAL
   useEffect(() => {
@@ -124,6 +159,16 @@ export default function App() {
     return base;
   };
 
+      const getMaxSandwiches = (item) => {
+      return Math.floor(item.units / item.used);
+      };
+
+      const inventory = [
+        ...proteinsData.map(i => ({ ...i, type: "Proteína" })),
+        ...toppingsData.map(i => ({ ...i, type: "Topping" })),
+        ...extrasData.map(i => ({ ...i, type: "Extra" })),
+      ];
+
   const calculateCost = (items, isProtein = false) =>
     items.reduce((sum, i) => sum + itemCost(i, isProtein), 0);
 
@@ -166,11 +211,42 @@ export default function App() {
     setClientName("");
   };
 
-  return (
-    <div style={{ padding: 20, background: "#020617", color: "white", minHeight: "100vh" }}>
-      <h1 style={{ textAlign: "center", fontSize: 28 }}>🔥 Sandwichies</h1>
+ return (
+  <div style={{ padding: 20, background: "#020617", color: "white", minHeight: "100vh" }}>
 
-      <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
+    <h1 style={{ textAlign: "center", fontSize: 28 }}>🔥 Sandwichies</h1>
+
+    {/* 🔥 TABS */}
+    <div style={{ display: "flex", gap: 10, marginTop: 10, justifyContent: "center" }}>
+      
+      {["dashboard", "sandwiches", "inventario", "hamburguesas"].map(tab => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          style={{
+            padding: "8px 14px",
+            borderRadius: 10,
+            border: "none",
+            cursor: "pointer",
+            background: activeTab === tab ? "#22c55e" : "#1e293b",
+            color: "white",
+            fontWeight: "bold"
+          }}
+        >
+          {tab.toUpperCase()}
+        </button>
+      ))}
+      </div>
+
+        {activeTab === "sandwiches" && (
+          <div style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 1fr",
+          gap: 20,
+          marginTop: 20,
+          alignItems: "start",
+            }}
+            > 
 
         {/* BUILDER */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 15 }}>
@@ -209,15 +285,23 @@ export default function App() {
         </div>
 
         {/* PEDIDO */}
-        <div style={{ flex: 1, background: "#0f172a", padding: 20, borderRadius: 12 }}>
+        <div style={{
+            background: "linear-gradient(160deg, #020617, #0f172a)",
+            padding: 20,
+            borderRadius: 20,
+            border: "1px solid #1e293b",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+            position: "sticky",
+            top: 20,
+          }}>
           <h2>🧾 Pedido</h2>
 
           <div style={{ marginBottom: 10 }}>
-  <h3 style={{ margin: 0 }}>{generateName(proteins)}</h3>
-  <small style={{ color: "#94a3b8" }}>
-    Cliente: {clientName || "General"}
-  </small>
-</div>
+            <h3 style={{ margin: 0 }}>{generateName(proteins, size)}</h3>
+            <small style={{ color: "#94a3b8" }}>
+              Cliente: {clientName || "General"}
+            </small>
+          </div>
 
           <hr style={{ borderColor: "#1e293b" }} />
 
@@ -251,37 +335,116 @@ export default function App() {
           <p style={{ fontSize: 32, fontWeight: "bold", color: "#22c55e" }}>💵 ${salePrice.toFixed(0)}</p>
         </div>
       </div>
+      )}
 
       {/* HISTORIAL */}
-      <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 20,
-    marginTop: 20,
-  }}
->
-        <h2>📊 Historial</h2>
+      {activeTab === "sandwiches" && (
+      <div style={{ marginTop: 40 }}>
+      <div style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 15
+    }}>
+    <h2>🕘 Historial de pedidos</h2>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 15 }}>
+    <span style={{
+      background: "#022c22",
+      color: "#22c55e",
+      padding: "4px 10px",
+      borderRadius: 10,
+      fontSize: 12
+    }}>
+      {orders.length} pedidos
+    </span>
+  </div>
+
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+      gap: 15,
+    }}
+  >
           {orders.map(order => (
-            <div key={order.id} onClick={() => setSelectedOrder(order)} style={{
-  background: "#0f172a",
-  padding: 15,
-  borderRadius: 12,
-  cursor: "pointer",
-  border: "1px solid #1e293b",
-  transition: "all 0.2s ease",
-}}
-onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
-onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-              <strong>Orden #{order.orderNumber}</strong>
-              <p>{order.clientName}</p>
-              <p>${order.price?.toFixed(0)}</p>
-            </div>
-          ))}
+            <div
+    key={order.id}
+    onClick={() => setSelectedOrder(order)}
+    style={{
+      background: "#0f172a",
+      padding: 16,
+      borderRadius: 16,
+      border: "1px solid #1e293b",
+      cursor: "pointer",
+      transition: "0.2s",
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-3px)")}
+    onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+  >
+
+    <div style={{ fontSize: 12, color: "#94a3b8" }}>
+      ORDEN #{order.orderNumber}
+    </div>
+
+    <p style={{ fontWeight: "bold", margin: "6px 0" }}>
+      {order.clientName || "Cliente"}
+    </p>
+
+    <p style={{ fontSize: 12, opacity: 0.7 }}>
+      {order.name}
+    </p>
+
+    <p style={{
+      marginTop: 10,
+      fontWeight: "bold",
+      fontSize: 18,
+      color: "#22c55e"
+    }}>
+      ${order.price?.toFixed(0)}
+    </p>
+
+  </div>
+))}
         </div>
       </div>
+      )}
+
+{activeTab === "inventario" && (
+  <div style={{ marginTop: 30 }}>
+
+    <h2>📦 Inventario</h2>
+
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+      gap: 15,
+      marginTop: 15
+    }}>
+      {inventory.map((item, idx) => {
+        const max = Math.floor(item.units / item.used);
+
+        return (
+          <div
+            key={idx}
+            style={{
+              background: "#0f172a",
+              padding: 16,
+              borderRadius: 12,
+              border: "1px solid #1e293b"
+            }}
+          >
+            <p style={{ fontSize: 12, opacity: 0.6 }}>{item.type}</p>
+            <h3>{item.name}</h3>
+            <p>📦 Stock: {item.units}</p>
+            <p>🥪 Uso: {item.used}</p>
+            <p>👉 Máx: {max}</p>
+          </div>
+        );
+      })}
+    </div>
+
+  </div>
+)}
 
       {/* MODAL */}
       {selectedOrder && (
@@ -301,72 +464,94 @@ onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
 
       {/* 🧾 RECIBO */}
       <div
-        id="printable"
-        style={{
-          background: "#fff",
-          color: "#000",
-          padding: 20,
-          width: 280,
-          borderRadius: 10,
-          fontFamily: "monospace",
-        }}
-      >
-        <h2 style={{ textAlign: "center" }}>🔥 SANDWICHIES</h2>
+  id="printable"
+  style={{
+    display: "flex",
+    gap: 20,
+    background: "#000",
+    padding: 20,
+    borderRadius: 10,
+  }}
+>
 
-        <p>Orden #{selectedOrder.orderNumber}</p>
-        <p>Cliente: {selectedOrder.clientName || "N/A"}</p>
-        <p style={{ fontSize: 12 }}>{selectedOrder.date}</p>
+  {/* 🧾 CLIENTE */}
+  <div style={{ width: 250, fontFamily: "monospace" }}>
+    <h3>🧾 Cliente</h3>
 
-        <hr style={{ borderColor: "#1e293b" }} />
+    <p>Orden #{selectedOrder.orderNumber}</p>
+    <p>{selectedOrder.clientName}</p>
+    <p style={{ fontSize: 12 }}>{selectedOrder.date}</p>
 
-        <p><strong>{selectedOrder.name}</strong></p>
+    <hr />
 
-        {/* ITEMS */}
-        {selectedOrder.proteins.map((i, idx) => {
-          const base = (i.price / i.units) * i.used;
-          const total = selectedOrder.doubleProtein
-            ? base * 2 + base * 0.5
-            : base;
+    <strong>{selectedOrder.name}</strong>
 
-          return (
-            <div key={`${i.name}-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>{i.name}</span>
-              <span>${total.toFixed(0)}</span>
-            </div>
-          );
-        })}
-
-        {[...selectedOrder.toppings, ...selectedOrder.extras.filter(e => e.name !== "Doble proteína")].map((i, idx) => {
-          const cost = (i.price / i.units) * i.used;
-
-          return (
-            <div key={`${i.name}-extra-${idx}`} style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>{i.name}</span>
-              <span>${cost.toFixed(0)}</span>
-            </div>
-          );
-        })}
-
-        <hr style={{ borderColor: "#1e293b" }} />
-
-        <p style={{ fontWeight: "bold", fontSize: 18 }}>
-          TOTAL: ${selectedOrder.price.toFixed(0)}
-        </p>
-
-        <hr style={{ borderColor: "#1e293b" }} />
-
-        <p style={{ textAlign: "center" }}>💳 Paga aquí</p>
-
-        <img
-          src="/qr.png"
-          alt="QR Pago"
-          style={{ width: "100%", marginTop: 10 }}
-        />
-
-        <p style={{ textAlign: "center", marginTop: 10 }}>
-          🙌 Gracias por tu compra
-        </p>
+    {/* SIN PRECIOS */}
+    {selectedOrder.proteins.map((i, idx) => (
+      <div key={idx}>
+        {i.name} x{selectedOrder.doubleProtein ? i.used * 2 : i.used}
       </div>
+    ))}
+
+    {selectedOrder.toppings.map((i, idx) => (
+      <div key={idx}>{i.name} x{i.used}</div>
+    ))}
+
+    {selectedOrder.extras
+      .filter(e => e.name !== "Doble proteína")
+      .map((i, idx) => (
+        <div key={idx}>{i.name} x{i.used}</div>
+      ))}
+
+    <hr />
+
+    <p style={{ fontWeight: "bold" }}>
+      TOTAL: ${selectedOrder.price.toFixed(0)}
+    </p>
+    <img src="/qr.png" style={{ width: "100%", marginTop: 10 }} />
+  </div>
+
+  {/* 💼 VENDEDOR */}
+  <div style={{ width: 250, fontFamily: "monospace" }}>
+    <h3>💼 Vendedor</h3>
+
+    <strong>{selectedOrder.name}</strong>
+
+    {selectedOrder.proteins.map((i, idx) => {
+      const base = (i.price / i.units) * i.used;
+      const total = selectedOrder.doubleProtein
+        ? base * 2 + base * 0.5
+        : base;
+
+      return (
+        <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>{i.name}</span>
+          <span>${total.toFixed(0)}</span>
+        </div>
+      );
+    })}
+
+    {[...selectedOrder.toppings, ...selectedOrder.extras.filter(e => e.name !== "Doble proteína")].map((i, idx) => {
+      const cost = (i.price / i.units) * i.used;
+
+      return (
+        <div key={idx} style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>{i.name}</span>
+          <span>${cost.toFixed(0)}</span>
+        </div>
+      );
+    })}
+
+    <hr />
+
+    <p>Costo: ${selectedOrder.cost.toFixed(0)}</p>
+    <p>Venta: ${selectedOrder.price.toFixed(0)}</p>
+    <p style={{ fontWeight: "bold" }}>
+      Ganancia: ${(selectedOrder.price - selectedOrder.cost).toFixed(0)}
+    </p>
+  </div>
+
+</div>
 
       {/* BOTONES */}
       <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
@@ -418,6 +603,19 @@ onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
         >
           ❌ Cerrar
         </button>
+        <button
+        onClick={downloadReceipt}
+        style={{
+          padding: 10,
+          background: "#3b82f6",
+          border: "none",
+          borderRadius: 8,
+          color: "white",
+          cursor: "pointer",
+        }}
+      >
+        📲 Descargar Imagen
+      </button>
       </div>
     </div>
   </div>
@@ -430,13 +628,11 @@ function Category({ title, items, selected, setSelected, toggle, color, isSize }
   return (
     <div style={{ background: "#0f172a", padding: 15, borderRadius: 12 }}>
       <h3>{title}</h3>
-
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
         {items.map((item, i) => {
           const isSelected = isSize
             ? selected === item
             : selected.some(s => s.name === item.name);
-
           return (
             <button
               key={isSize ? item : item.name}
