@@ -73,7 +73,7 @@ if (!element) {
 };
   // 🔥 TIEMPO REAL
   useEffect(() => {
-    const q = query(collection(db, "orders"), orderBy("orderNumber", "desc"));
+    const q = query(collection(db, "orders"));
 
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
