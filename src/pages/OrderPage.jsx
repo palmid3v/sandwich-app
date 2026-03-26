@@ -106,31 +106,46 @@ export default function OrderPage() {
   };
 
   return (
-    <div style={{
-      display: "flex",
-      gap: 20,
-      padding: 20,
-      background: "#020617",
-      color: "white",
-      minHeight: "100vh"
-    }}>
-
+        <div style={{
+            display: "flex",
+            gap: 30,
+            padding: 30,
+            background: "#020617",
+            color: "white",
+            minHeight: "100vh",
+            maxWidth: 1200,
+            margin: "0 auto"
+          }}>
       {/* 🧾 FORMULARIO */}
       <div style={{ flex: 1 }}>
-        <h1>🥪 Haz tu pedido</h1>
-
+        <h3 style={{ marginBottom: 10 }}>👤 Datos del cliente</h3>
         <input
-          placeholder="Tu nombre"
+          placeholder="A nombre de quien será el pedido?"
           value={clientName}
           onChange={(e) => setClientName(e.target.value)}
-          style={{ width: "100%", padding: 10, marginBottom: 10 }}
+          style={{
+            width: "100%",
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid #1e293b",
+            background: "#020617",
+            color: "white",
+            marginBottom: 10
+          }}
         />
 
         <input
-          placeholder="WhatsApp (573001234567)"
+          placeholder="Wapp (573123456789)"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          style={{ width: "100%", padding: 10, marginBottom: 20 }}
+          style={{
+            width: "100%",
+            padding: 12,
+            borderRadius: 10,
+            border: "1px solid #1e293b",
+            background: "#020617",
+            color: "white"
+          }}
         />
 
         <Category
@@ -169,47 +184,88 @@ export default function OrderPage() {
           onClick={handleOrder}
           style={{
             marginTop: 20,
-            padding: 15,
+            padding: 16,
             width: "100%",
             background: "#22c55e",
             border: "none",
-            borderRadius: 10,
+            borderRadius: 12,
             fontWeight: "bold",
-            cursor: "pointer"
+            fontSize: 16,
+            cursor: "pointer",
+            transition: "0.2s"
           }}
+          onMouseEnter={(e) => e.target.style.opacity = 0.85}
+          onMouseLeave={(e) => e.target.style.opacity = 1}
         >
-          📦 Confirmar pedido
+          🚀 Confirmar pedido
         </button>
       </div>
 
       {/* 📊 RESUMEN */}
       <div style={{
-        width: 300,
-        background: "#0f172a",
-        padding: 20,
-        borderRadius: 12,
-        height: "fit-content"
-      }}>
-        <h3>🧾 Tu pedido</h3>
+          width: 320,
+          background: "#0f172a",
+          padding: 20,
+          borderRadius: 16,
+          height: "fit-content",
+          border: "1px solid #1e293b"
+        }}>
+          <h3>🧾 Tu pedido</h3>
+          <p><strong>{generateName(proteins, size)}</strong></p>
+          {extras.some(e => e.name === "Doble proteína") && (
+          <p style={{
+            color: "#f59e0b",
+            fontWeight: "bold",
+            marginTop: 5
+            }}>
+            🔥 Proteína duplicada activada
+            </p>
+            )}
 
-        <p><strong>{generateName(proteins, size)}</strong></p>
+          <hr style={{ margin: "10px 0" }} />
 
-        <hr />
+          <p>📏 {size} cm</p>
 
-        <p>📏 {size} cm</p>
+          {proteins.length > 0 && (
+            <>
+              <p style={{ marginTop: 10, opacity: 0.7 }}>Proteínas</p>
+              {proteins.map(p => <p key={p.name}>• {p.name}</p>)}
+            </>
+          )}
 
-        {proteins.map(p => <p key={p.name}>+ {p.name}</p>)}
-        {toppings.map(t => <p key={t.name}>+ {t.name}</p>)}
-        {extras.map(e => <p key={e.name}>+ {e.name}</p>)}
+          {toppings.length > 0 && (
+            <>
+              <p style={{ marginTop: 10, opacity: 0.7 }}>Toppings</p>
+              {toppings.map(t => <p key={t.name}>• {t.name}</p>)}
+            </>
+          )}
 
-        <hr />
+          {extras.length > 0 && (
+          <>
+            <p style={{ marginTop: 10, opacity: 0.7 }}>Extras</p>
 
-        <p>💰 Total:</p>
-        <p style={{ fontSize: 22, fontWeight: "bold" }}>
-          ${salePrice.toFixed(0)}
-        </p>
+            {extras.map(e => (
+              <p key={e.name}>
+                • {e.name === "Doble proteína"
+                  ? "🔥 Doble proteína"
+                  : e.name}
+              </p>
+            ))}
+          </>
+        )}
+
+          <hr style={{ margin: "15px 0" }} />
+
+          <p style={{ opacity: 0.7 }}>Total a pagar</p>
+
+          <p style={{
+            fontSize: 28,
+            fontWeight: "bold",
+            color: "#22c55e"
+          }}>
+            ${salePrice.toFixed(0)}
+          </p>
+        </div>
       </div>
-
-    </div>
   );
 }
