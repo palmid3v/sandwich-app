@@ -16,6 +16,10 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import html2canvas from "html2canvas";
+import Login from "./pages/Login";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase";
+import { signOut } from "firebase/auth";
 
 // 🔥 DATA
 const proteinsData = [
@@ -48,6 +52,13 @@ export default function App() {
   const [phone, setPhone] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [activeTab, setActiveTab] = useState("sandwiches");
+
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const handleLogout = async () => {
+  await signOut(auth);
+    };
 
   const isDoubleProtein = extras.some(e => e.name === "Doble proteína");
 
@@ -85,6 +96,15 @@ if (!element) {
 
     return () => unsub();
   }, []);
+  // LOGIN
+      useEffect(() => {
+  const unsub = onAuthStateChanged(auth, (u) => {
+    setUser(u);
+    setLoading(false);
+  });
+
+  return () => unsub();
+}, []);
 
   // 🔢 CONTADOR GLOBAL
   const getNextOrderNumber = async () => {
@@ -168,11 +188,30 @@ if (!element) {
     setExtras([]);
     setClientName("");
   };
+    if (loading) return null;
+
+  if (!user) {
+  return <Login />;
+    }
 
  return (
   <div style={{ padding: 20, background: "#020617", color: "white", minHeight: "100vh" }}>
 
     <h1 style={{ textAlign: "center", fontSize: 28 }}>🔥 Sandwichies</h1>
+
+        <button
+    onClick={handleLogout}
+    style={{
+      padding: "8px 12px",
+      background: "#ef4444",
+      border: "none",
+      borderRadius: 8,
+      color: "white",
+      cursor: "pointer"
+    }}
+  >
+    🔓 Cerrar sesión
+  </button>
 
     {/* 🔥 TABS */}
     <div style={{ display: "flex", gap: 10, marginTop: 10, justifyContent: "center" }}>
