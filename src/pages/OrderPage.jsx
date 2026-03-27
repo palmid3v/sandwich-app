@@ -107,17 +107,22 @@ export default function OrderPage() {
 
   return (
         <div style={{
-            display: "flex",
-            gap: 30,
-            padding: 30,
-            background: "#020617",
-            color: "white",
-            minHeight: "100vh",
-            maxWidth: 1200,
-            margin: "0 auto"
-          }}>
+          display: "flex",
+          gap: 40,
+          padding: 40,
+          background: "#020617",
+          color: "white",
+          minHeight: "100vh",
+          maxWidth: 1200,
+          margin: "0 auto"
+        }}>
       {/* 🧾 FORMULARIO */}
-      <div style={{ flex: 1 }}>
+      <div style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 20
+          }}>
         <h3 style={{ marginBottom: 10 }}>👤 Datos del cliente</h3>
         <input
           placeholder="A nombre de quien será el pedido?"
@@ -147,7 +152,13 @@ export default function OrderPage() {
             color: "white"
           }}
         />
-
+          <div style={{
+            background: "#0f172a",
+            padding: 20,
+            borderRadius: 16,
+            border: "1px solid #1e293b"
+          }}>
+            
         <Category
           title="📏 Tamaño"
           items={["15", "30"]}
@@ -179,7 +190,7 @@ export default function OrderPage() {
           setSelected={setExtras}
           toggle={toggleItem}
         />
-
+            </div>
         <button
           onClick={handleOrder}
           style={{
