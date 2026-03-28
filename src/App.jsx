@@ -163,10 +163,10 @@ if (!element) {
   const saveOrder = async () => {
     if (!proteins.length) return;
 
-    const orderNumber = await getNextOrderNumber();
+    // const orderNumber = await getNextOrderNumber();
 
     const newOrder = {
-      orderNumber,
+      // orderNumber,
       clientName,
       phone,
       size,
@@ -356,6 +356,7 @@ if (!element) {
         {activeTab === "sandwiches" && (
           <OrdersHistory
             orders={orders}
+            selectedOrder={selectedOrder}
             setSelectedOrder={setSelectedOrder}
           />
         )}

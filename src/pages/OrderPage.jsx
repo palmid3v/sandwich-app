@@ -183,8 +183,6 @@ export default function OrderPage() {
       alert("Selecciona al menos una proteína");
       return;
     }
-
-    const orderNumber = await getNextOrderNumber();
     
     const finalName = selectedSuggestion
       ? `${selectedSuggestion} ${size === "30" ? "Grande" : "Pequeño"}`
