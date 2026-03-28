@@ -83,6 +83,15 @@ export default function OrderPage() {
 
   const [baseIngredients, setBaseIngredients] = useState(defaultBase);
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = "success") => {
+  setToast({ message, type });
+
+  setTimeout(() => {
+    setToast(null);
+  }, 2000);
+};
 
   const getNextOrderNumber = async () => {
   const ref = doc(db, "counters", "orders");
@@ -196,7 +205,7 @@ export default function OrderPage() {
 
     setCart(prev => [...prev, order]);
 
-      console.log("Sandwich agregado");
+      showToast("🥪 Sandwich agregado");
 
       // RESET (NO borrar cliente)
       setProteins([]);
@@ -206,12 +215,12 @@ export default function OrderPage() {
 
   const confirmOrder = async () => {
   if (!clientName || !phone) {
-    alert("Completa tus datos");
+    showToast("⚠️ Completa tus datos", "error");
     return;
   }
 
   if (!cart.length) {
-    alert("Agrega al menos un sandwich");
+    showToast("🛒 Agrega al menos un sandwich", "error");
     return;
   }
 
@@ -230,8 +239,10 @@ export default function OrderPage() {
 
   await addDoc(collection(db, "orders"), finalOrder);
 
+  showToast("🚀 Pedido enviado");
+
   // WhatsApp
-  let msg = `Pedido #${orderNumber}\n${clientName}\n\n`;
+  let msg = `Pedido #${orderNumber}\n${clientName}\n📱 ${phone}\n\n`;
 
   cart.forEach((item, i) => {
   msg += `🍞 ${i + 1}. ${item.name}\n`;
@@ -264,7 +275,7 @@ export default function OrderPage() {
 
   msg += `TOTAL: $${finalOrder.total}`;
 
-  window.open(`https://wa.me/57${phone}?text=${encodeURIComponent(msg)}`);
+  window.open(`https://wa.me/573226278286?text=${encodeURIComponent(msg)}`);
 
   setCart([]);
 };
@@ -304,7 +315,7 @@ export default function OrderPage() {
         />
 
         <input
-          placeholder="Whatsapp (573123456789)"
+          placeholder="Whatsapp(3123456789)"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           style={{
@@ -486,7 +497,7 @@ export default function OrderPage() {
                   ))}
                 </>
               )}
-          <p><strong>{generateName(proteins, size, selectedSuggestion)}</strong></p>
+          <p><strong style={{ color: "#fbbf24" }}>{generateName(proteins, size, selectedSuggestion)}</strong></p>
           {extras.some(e => e.name === "Doble proteína") && (
           <p style={{
             color: "#f59e0b",
@@ -535,7 +546,8 @@ export default function OrderPage() {
           <p style={{
             fontSize: 24,
             fontWeight: "bold",
-            color: "#22c55e"
+            color: "#22c55e",
+            textShadow: "0 0 10px rgba(34,197,94,0.4)"
           }}>
             ${Math.round(salePrice).toLocaleString()}
           </p>
