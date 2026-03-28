@@ -21,32 +21,35 @@ const sandwichRules = [
   },
 ];
 
-export const generateName = (proteins, size) => {
+export const generateName = (proteins, size, forcedName = null) => {
+  // 🔥 PRIORIDAD: nombre sugerido
+  if (forcedName) {
+    const sizeName = size === "30" ? "Grande" : "Pequeño";
+    return `${forcedName} ${sizeName}`;
+  }
+
   const names = proteins.map(p => p.name);
-  const nameSet = new Set(names);
 
-  let baseName = null;
+  let baseName = "🥪 Personalizado";
 
-  // 🔍 reglas inteligentes
-  for (const rule of sandwichRules) {
-    const matches = rule.match.every(item => nameSet.has(item));
-    if (matches) {
-      baseName = rule.name;
-      break;
-    }
+  if (names.includes("Chorizo") && names.includes("Pepperoni")) {
+    baseName = "🔥 Explosivo";
+  } else if (names.includes("Jamón serrano") && names.includes("Jamón asado")) {
+    baseName = "🥓 Doble Jamón";
+  } else if (names.includes("Chorizo") && names.includes("Salami")) {
+    baseName = "🌶️ Picante Especial";
+  } else if (names.length >= 5) {
+    baseName = "💣 Carnívoro Extremo";
+  } else if (names.length === 4) {
+    baseName = "👑 Mega Protein";
+  } else if (names.length === 3) {
+    baseName = "💪 Triple Protein";
+  } else if (names.length === 2) {
+    baseName = "🥪 Doble Protein";
+  } else if (names.length === 1) {
+    baseName = `🥪 ${names[0]}`;
   }
 
-  // 🧠 fallback
-  if (!baseName) {
-    if (names.length >= 5) baseName = "👑 Ultra Protein";
-    else if (names.length === 4) baseName = "👑 Mega Protein";
-    else if (names.length === 3) baseName = "💪 Triple Protein";
-    else if (names.length === 2) baseName = "🥪 Doble Protein";
-    else if (names.length === 1) baseName = `🥪 ${names[0]} Especial`;
-    else baseName = "🥪 Personalizado";
-  }
-
-  // 📏 tamaño
   const sizeName = size === "30" ? "Grande" : "Pequeño";
 
   return `${baseName} ${sizeName}`;

@@ -188,10 +188,11 @@ if (!element) {
     setExtras([]);
     setClientName("");
   };
+
     if (loading) return null;
 
-  if (!user) {
-  return <Login />;
+    if (!user) {
+      return <Login />;
     }
 
  return (
