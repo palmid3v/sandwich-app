@@ -540,12 +540,16 @@ export default function OrderPage() {
 
           <hr style={{ margin: "15px 0" }} />
 
-          <p style={{ opacity: 0.7 }}>Total a pagar</p>
+          <p style={{ opacity: 0.7 }}>Este sandwich</p>
+
+          <p style={{ fontSize: 12, opacity: 0.5 }}>
+            (Se reinicia al agregarlo)
+          </p>
+
           <p style={{
             fontSize: 24,
             fontWeight: "bold",
             color: "#22c55e",
-            textShadow: "0 0 10px rgba(34,197,94,0.4)"
           }}>
             ${Math.round(salePrice).toLocaleString()}
           </p>
@@ -589,17 +593,20 @@ export default function OrderPage() {
                   </button>
                 </div>
               ))}
+              <p style={{
+                fontSize: 14,
+                opacity: 0.7
+              }}>
+                🛒 Total pedido
+              </p>
 
-            <p style={{ fontWeight: "bold", marginTop: 10 }}>
-              Total: ${Math.round(cart.reduce((acc, i) => acc + i.price, 0)).toLocaleString()}
-            </p>
-          <p style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            color: "#22c55e"
-          }}>
-            ${Math.round(salePrice).toLocaleString()}
-          </p>
+              <p style={{
+                fontSize: 28,
+                fontWeight: "bold",
+                color: "#38bdf8" // 🔵 azul diferente
+              }}>
+                ${Math.round(cart.reduce((acc, i) => acc + i.price, 0)).toLocaleString()}
+              </p>
         </div>
       </div>
   );
