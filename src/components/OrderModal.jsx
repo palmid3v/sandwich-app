@@ -3,6 +3,15 @@ import { sendWhatsApp } from "../utils/whatsapp";
 export default function OrderModal({ selectedOrder, setSelectedOrder }) {
   if (!selectedOrder) return null;
 
+  const totalCost = selectedOrder.cost 
+  ?? selectedOrder.items?.reduce((acc, i) => acc + (i.cost || 0), 0);
+
+  const totalPrice = selectedOrder.price 
+    ?? selectedOrder.total 
+    ?? selectedOrder.items?.reduce((acc, i) => acc + (i.price || 0), 0);
+
+  const profit = totalPrice - totalCost;
+
   return (
     <div
       style={{
@@ -97,7 +106,7 @@ export default function OrderModal({ selectedOrder, setSelectedOrder }) {
             <hr />
 
             <p style={{ fontWeight: "bold" }}>
-              TOTAL: ${selectedOrder.price?.toFixed(0)}
+              TOTAL: ${totalPrice?.toFixed(0)}
             </p>
           </div>
 
@@ -136,8 +145,8 @@ export default function OrderModal({ selectedOrder, setSelectedOrder }) {
               const base = (i.price / i.units) * i.used;
 
               const total = isDouble
-                ? base * 2 + base * 0.5
-                : base;
+              ? base * 2
+              : base;
 
               return (
                 <div
@@ -178,13 +187,14 @@ export default function OrderModal({ selectedOrder, setSelectedOrder }) {
 
             <hr />
 
-            <p>Costo: ${selectedOrder.cost?.toFixed(0)}</p>
-            <p>Venta: ${selectedOrder.price?.toFixed(0)}</p>
+            <div style={{ marginTop: 10 }}>
+              <p>💸 Tu costo: ${totalCost?.toFixed(0)}</p>
+              <p>💵 Precio cliente: ${totalPrice?.toFixed(0)}</p>
 
-            <p style={{ fontWeight: "bold" }}>
-              Ganancia: $
-              {(selectedOrder.price - selectedOrder.cost)?.toFixed(0)}
-            </p>
+              <p style={{ fontWeight: "bold", color: "#22c55e" }}>
+                📈 Ganancia: ${profit?.toFixed(0)}
+              </p>
+            </div>            
           </div>
         </div>
 

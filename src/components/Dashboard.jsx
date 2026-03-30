@@ -1,16 +1,14 @@
 export default function Dashboard({ orders }) {
 
-  const totalSales = orders.reduce(
-    (sum, o) => sum + (o.total || 0),
-    0
-  );
+        const totalSales = orders.reduce(
+        (sum, o) => sum + (o.price || 0),
+        0
+      );
 
-  const totalCost = orders.reduce(
-    (sum, o) =>
-      sum +
-      (o.items?.reduce((acc, i) => acc + (i.cost || 0), 0) || 0),
-    0
-  );
+      const totalCost = orders.reduce(
+        (sum, o) => sum + (o.cost || 0),
+        0
+      );
   const totalProfit = totalSales - totalCost;
   const avgTicket = orders.length ? totalSales / orders.length : 0;
 
