@@ -3,6 +3,8 @@ import { addDoc, collection, doc, runTransaction, serverTimestamp } from "fireba
 import { db } from "../firebase";
 import Category from "../components/Category";
 import { generateName } from "../utils/generateName";
+import { INGREDIENTS } from "../data/ingredients";
+import { calculateTotalCost } from "../utils/pricing";
 
 
 // 🔥 DATA
@@ -26,7 +28,7 @@ const suggestedSandwiches = [
   },
   {
     name: "🍗 Mix Clásico",
-    proteins: ["Jamón de pavo", "Jamón asado"]
+    proteins: ["Jamón de pavo finas hierbas", "Jamón asado"]
   },
   {
     name: "🌶️ Picante Especial",
@@ -39,24 +41,15 @@ const suggestedSandwiches = [
   {
     name: "👑 Full Protein",
     proteins: [
-      "Jamón asado",
-      "Jamón serrano",
-      "Chorizo",
-      "Salami",
-      "Jamón de pavo",
-      "Pepperoni"
-    ]
-  }
-];
-
-const toppingsData = [
-  { name: "Lechuga", price: 2900, units: 20, used: 2 },
-  { name: "Pimentón", price: 6490, units: 10, used: 1 },
-];
-
-const extrasData = [
-  { name: "Queso extra", price: 6490, units: 16, used: 1 },
-  { name: "Doble proteína", price: 0, units: 1, used: 1 },
+    "Jamón asado",
+    "Jamón serrano",
+    "Chorizo",
+    "Salami",
+    "Jamón de pavo finas hierbas",
+    "Jamón pechuga de pavo",
+    "Pepperoni"
+  ]
+}
 ];
 
 export default function OrderPage() {
@@ -77,11 +70,10 @@ export default function OrderPage() {
   "Cebolla",
   "Salsa tomate",
   "Mayonesa",
-  "Mostaza",
-  "Queso mozzarella"
+  "Mostaza"
 ];
 
-  const [baseIngredients, setBaseIngredients] = useState(defaultBase);
+  const [baseIngredients, setBaseIngredients] = useState(defaultBase);  
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const [toast, setToast] = useState(null);
 
@@ -128,13 +120,14 @@ export default function OrderPage() {
 
   const sizeCost = size === "30" ? 3000 : 1500;
 
-  const totalCost =
-    sizeCost +
-    calculateCost(proteins, true) +
-    calculateCost(toppings) +
-    calculateCost(extras);
+  const totalCost = calculateTotalCost({
+  proteins,
+  toppings,
+  extras,
+  ingredients: INGREDIENTS
+});
 
-  const salePrice = Math.round(totalCost * 1.75);
+  const salePrice = totalCost * 1.75;
 
   // 🔁 TOGGLE
   const toggleItem = (item, list, setList) => {
@@ -155,9 +148,9 @@ export default function OrderPage() {
 };
 
   const applySuggestion = (suggestion) => {
-  const selectedProteins = proteinsData.filter(p =>
-    suggestion.proteins.includes(p.name)
-  );
+  const selectedProteins = INGREDIENTS.proteins.filter(p =>
+  suggestion.proteins.includes(p.name)
+);
 
   setProteins(selectedProteins);
   setExtras([]);
@@ -369,7 +362,10 @@ export default function OrderPage() {
             borderRadius: 16,
             border: "1px solid #1e293b"
           }}>
-            <h3>🥖 Base del sandwich</h3>
+            <h3>🥖 Elige la base</h3>
+              <p style={{ fontSize: 12, opacity: 0.6 }}>
+                (Selecciona lo que quieres)
+              </p>
 
             <div style={{
               display: "grid",
@@ -418,7 +414,7 @@ export default function OrderPage() {
 
         <Category
           title="🥩 Proteínas"
-          items={proteinsData}
+          items={INGREDIENTS.proteins}
           selected={proteins}
           setSelected={setProteins}
           toggle={toggleItem}
@@ -434,7 +430,7 @@ export default function OrderPage() {
 
         <Category
           title="🧀 Extras"
-          items={extrasData}
+          items={INGREDIENTS.extras}
           selected={extras}
           setSelected={setExtras}
           toggle={toggleItem}
@@ -456,7 +452,7 @@ export default function OrderPage() {
                 boxShadow: "0 4px 14px rgba(34,197,94,0.4)"
               }}
         >
-          ➕ Agregar sandwich
+          ➕ Agregar al pedido
         </button>
 
         <button
@@ -487,6 +483,9 @@ export default function OrderPage() {
           border: "1px solid #1e293b"
         }}>
           <h3>🧾 Tu pedido</h3>
+          <p style={{ opacity: 0.7, marginTop: 5 }}>
+            🥖 Incluye base fresca + queso mozzarella
+          </p>
           {baseIngredients.length > 0 && (
                 <>
                   <p style={{ marginTop: 10, opacity: 0.7 }}>Base</p>
@@ -540,7 +539,7 @@ export default function OrderPage() {
 
           <hr style={{ margin: "15px 0" }} />
 
-          <p style={{ opacity: 0.7 }}>Este sandwich</p>
+          <p style={{ opacity: 0.7 }}>💰 Costo de preparación (incluye base)</p>
 
           <p style={{ fontSize: 12, opacity: 0.5 }}>
             (Se reinicia al agregarlo)
@@ -593,11 +592,8 @@ export default function OrderPage() {
                   </button>
                 </div>
               ))}
-              <p style={{
-                fontSize: 14,
-                opacity: 0.7
-              }}>
-                🛒 Total pedido
+              <p style={{ fontSize: 14, opacity: 0.7 }}>
+                💵 Total a pagar
               </p>
 
               <p style={{

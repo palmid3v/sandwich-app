@@ -9,24 +9,32 @@ export default function Category({ title, items, selected, setSelected, toggle, 
             ? selected === item
             : selected.some(s => s.name === item.name);
 
+        const isDisabled = isSize && item === "30";      
+
           return (
             <button
               key={isSize ? item : item.name}
               onClick={() =>
-                isSize
-                  ? setSelected(item)
-                  : toggle(item, selected, setSelected)
-              }
+              isDisabled
+                ? null
+                : isSize
+                ? setSelected(item)
+                : toggle(item, selected, setSelected)
+            }
               style={{
                 padding: 12,
                 borderRadius: 10,
                 border: "none",
                 background: isSelected ? color || "#22c55e" : "#1e293b",
-                color: "white",
+                color: isDisabled ? "#64748b" : "white",
                 fontWeight: "bold",
+                cursor: isDisabled ? "not-allowed" : "pointer",
+                opacity: isDisabled ? 0.5 : 1
               }}
             >
-              {isSize ? `${item} cm` : item.name}
+              {isSize
+              ? `${item} cm${isDisabled ? " (Pronto)" : ""}`
+              : item.name}
             </button>
           );
         })}

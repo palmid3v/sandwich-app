@@ -21,25 +21,8 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 import { signOut } from "firebase/auth";
 
-// 🔥 DATA
-const proteinsData = [
-  { name: "Jamón asado", price: 9900, units: 6, used: 1 },
-  { name: "Jamón serrano", price: 7990, units: 5, used: 1 },
-  { name: "Chorizo", price: 8400, units: 8, used: 1 },
-  { name: "Salami", price: 8400, units: 8, used: 1 },
-  { name: "Jamón de pavo", price: 11950, units: 20, used: 1 },
-  { name: "Pepperoni", price: 4990, units: 39, used: 3 },
-];
-
-const toppingsData = [
-  { name: "Lechuga", price: 2900, units: 20, used: 2 },
-  { name: "Pimentón", price: 6490, units: 10, used: 1 },
-];
-
-const extrasData = [
-  { name: "Queso extra", price: 6490, units: 16, used: 1 },
-  { name: "Doble proteína", price: 0, units: 1, used: 1 },
-];
+import { INGREDIENTS } from "./data/ingredients";
+import { calculateTotalCost } from "./utils/pricing";
 
 export default function App() {
   const [size, setSize] = useState("15");
@@ -139,12 +122,6 @@ if (!element) {
       : setList([...list, item]);
   };
 
-  const itemCost = (item, isProtein = false) => {
-    const base = (item.price / item.units) * item.used;
-    if (isProtein && isDoubleProtein) return base * 2 + base * 0.5;
-    return base;
-  };
-
       const getMaxSandwiches = (item) => {
       return Math.floor(item.units / item.used);
       };
@@ -155,16 +132,12 @@ if (!element) {
         ...extrasData.map(i => ({ ...i, type: "Extra" })),
       ];
 
-  const calculateCost = (items, isProtein = false) =>
-    items.reduce((sum, i) => sum + itemCost(i, isProtein), 0);
-
-  const sizeCost = size === "30" ? 3000 : 1500;
-
-  const totalCost =
-    sizeCost +
-    calculateCost(proteins, true) +
-    calculateCost(toppings) +
-    calculateCost(extras);
+  const totalCost = calculateTotalCost({
+  proteins,
+  toppings,
+  extras,
+  ingredients: INGREDIENTS
+});
 
   const salePrice = totalCost * (1 + margin);
   const hasOrder = proteins.length || toppings.length || extras.length;
@@ -327,7 +300,7 @@ if (!element) {
 
           <hr style={{ borderColor: "#1e293b" }} />
 
-          <p>Tamaño: {size} cm - ${sizeCost}</p>
+          <p>Tamaño: {size} cm</p>
 
           {proteins.map(i => (
             <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
