@@ -27,9 +27,26 @@ import { itemCost } from "./utils/pricing";
 
 export default function App() {
   const [size, setSize] = useState("15");
+
+
+
   const [proteins, setProteins] = useState([]);
   const [toppings, setToppings] = useState([]);
   const [extras, setExtras] = useState([]);
+
+  const defaultBase = [
+  "Lechuga",
+  "Pimentón Asado",
+  "Cebolla",
+  "Salsa tomate",
+  "Mayonesa",
+  "Mostaza"
+];
+
+const [baseIngredients, setBaseIngredients] = useState(defaultBase);
+
+
+
   const [orders, setOrders] = useState([]);
   const [margin, setMargin] = useState(0.75);
   const [clientName, setClientName] = useState("");
@@ -125,6 +142,14 @@ if (!element) {
       : setList([...list, item]);
   };
 
+  const toggleBase = (item) => {
+  if (baseIngredients.includes(item)) {
+    setBaseIngredients(baseIngredients.filter(i => i !== item));
+  } else {
+    setBaseIngredients([...baseIngredients, item]);
+  }
+};
+
       const getMaxSandwiches = (item) => {
       return Math.floor(item.units / item.used);
       };
@@ -148,13 +173,11 @@ if (!element) {
   const saveOrder = async () => {
     if (!proteins.length) return;
 
-    // const orderNumber = await getNextOrderNumber();
-
     const newOrder = {
-      // orderNumber,
       clientName,
       phone,
       size,
+      base: baseIngredients, // 🔥 ESTA ES LA CLAVE
       proteins,
       toppings,
       extras,
@@ -172,6 +195,8 @@ if (!element) {
     setToppings([]);
     setExtras([]);
     setClientName("");
+
+    setBaseIngredients(defaultBase);
   };
 
     if (loading) return null;
@@ -259,6 +284,43 @@ if (!element) {
             />
           </div>
 
+          <div style={{
+              background: "#0f172a",
+              padding: 15,
+              borderRadius: 12
+            }}>
+              <h3>🥖 Base incluida</h3>
+
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2,1fr)",
+                gap: 10,
+                marginTop: 10
+              }}>
+                {defaultBase.map((item) => {
+                  const selected = baseIngredients.includes(item);
+
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => toggleBase(item)}
+                      style={{
+                        padding: 10,
+                        borderRadius: 10,
+                        border: "none",
+                        background: selected ? "#22c55e" : "#1e293b",
+                        color: "white",
+                        fontWeight: "bold",
+                        cursor: "pointer"
+                      }}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
           <Category
             title="🥩 Proteínas"
             items={INGREDIENTS.proteins}
@@ -316,6 +378,10 @@ if (!element) {
           }}>
           <h2>🧾 Pedido</h2>
 
+          <p style={{ opacity: 0.7 }}>
+            🥖 Incluye base + queso mozzarella
+          </p>
+
           <div style={{ marginBottom: 10 }}>
             <h3 style={{ margin: 0 }}>{generateName(proteins, size)}</h3>
             <small style={{ color: "#94a3b8" }}>
@@ -326,6 +392,15 @@ if (!element) {
           <hr style={{ borderColor: "#1e293b" }} />
 
           <p>Tamaño: {size} cm</p>
+
+          {baseIngredients.length > 0 && (
+            <>
+              <p style={{ marginTop: 10, opacity: 0.7 }}>🥖 Base</p>
+              {baseIngredients.map(b => (
+                <p key={b}>• {b}</p>
+              ))}
+            </>
+          )}
 
           {proteins.map(i => (
             <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
