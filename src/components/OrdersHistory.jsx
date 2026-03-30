@@ -1,4 +1,17 @@
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase";
+
 export default function OrdersHistory({ orders, selectedOrder, setSelectedOrder }) {
+
+  const updateStatus = async (id, newStatus) => {
+  try {
+    const ref = doc(db, "orders", id);
+    await updateDoc(ref, { status: newStatus });
+  } catch (err) {
+    console.error("Error actualizando estado:", err);
+  }
+};
+
   return (
     <div style={{ marginTop: 40 }}>
       <div style={{
@@ -53,6 +66,20 @@ export default function OrdersHistory({ orders, selectedOrder, setSelectedOrder 
 
             <p style={{ fontSize: 12, opacity: 0.7 }}>
               {order.name}
+            </p>
+
+            <p style={{
+              fontSize: 12,
+              fontWeight: "bold",
+              marginTop: 5,
+              color:
+                order.status === "listo"
+                  ? "#22c55e"
+                  : order.status === "preparando"
+                  ? "#f97316"
+                  : "#fbbf24"
+            }}>
+              {order.status?.toUpperCase() || "PENDIENTE"}
             </p>
 
             <p style={{
@@ -161,9 +188,60 @@ export default function OrdersHistory({ orders, selectedOrder, setSelectedOrder 
         Total: ${Math.round(selectedOrder.total || 0).toLocaleString()}
       </h3>
 
+      <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
+
+  <button
+    onClick={() => updateStatus(selectedOrder.id, "pendiente")}
+    style={{
+      flex: 1,
+      padding: 10,
+      background: "#fbbf24",
+      border: "none",
+      borderRadius: 10,
+      fontWeight: "bold",
+      cursor: "pointer"
+    }}
+  >
+    🟡 Pendiente
+  </button>
+
+  <button
+    onClick={() => updateStatus(selectedOrder.id, "preparando")}
+    style={{
+      flex: 1,
+      padding: 10,
+      background: "#f97316",
+      border: "none",
+      borderRadius: 10,
+      fontWeight: "bold",
+      cursor: "pointer",
+      color: "white"
+    }}
+  >
+    🟠 Preparando
+  </button>
+
+  <button
+    onClick={() => updateStatus(selectedOrder.id, "listo")}
+    style={{
+      flex: 1,
+      padding: 10,
+      background: "#22c55e",
+      border: "none",
+      borderRadius: 10,
+      fontWeight: "bold",
+      cursor: "pointer",
+      color: "white"
+    }}
+  >
+    🟢 Listo
+  </button>
+
+</div>
+
     </div>
   </div>
 )}
     </div>
-  );
+    );
 }

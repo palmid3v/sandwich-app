@@ -86,13 +86,22 @@ if (!element) {
   useEffect(() => {
     const q = query(collection(db, "orders"));
 
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setOrders(data);
+    onSnapshot(q, (snapshot) => {
+  const data = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  // 🔔 detectar nuevo pedido
+  if (data.length > orders.length) {
+    const audio = new Audio("/bell.mp3");
+    audio.play().catch(() => {
+      console.log("El navegador bloqueó el sonido");
     });
+  }
+
+  setOrders(data);
+});
 
     return () => unsub();
   }, []);
