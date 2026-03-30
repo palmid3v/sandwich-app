@@ -23,6 +23,7 @@ import { signOut } from "firebase/auth";
 
 import { INGREDIENTS } from "./data/ingredients";
 import { calculateTotalCost } from "./utils/pricing";
+import { itemCost } from "./utils/pricing";
 
 export default function App() {
   const [size, setSize] = useState("15");
@@ -67,27 +68,29 @@ if (!element) {
 };
   // 🔥 TIEMPO REAL
   useEffect(() => {
-    const q = query(collection(db, "orders"));
+  const q = query(collection(db, "orders"));
 
-    onSnapshot(q, (snapshot) => {
-  const data = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const unsub = onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-  // 🔔 detectar nuevo pedido
-  if (data.length > orders.length) {
-    const audio = new Audio("/bell.mp3");
-    audio.play().catch(() => {
-      console.log("El navegador bloqueó el sonido");
-    });
-  }
+    // 🔔 detectar nuevo pedido
+    if (data.length > orders.length) {
+      const audio = new Audio("/bell.mp3");
+      audio.play().catch(() => {
+        console.log("El navegador bloqueó el sonido");
+      });
+    }
 
-  setOrders(data);
-});
+    setOrders(data);
+  });
 
-    return () => unsub();
-  }, []);
+  return () => unsub();
+}, []);  
+
+
   // LOGIN
       useEffect(() => {
   const unsub = onAuthStateChanged(auth, (u) => {
@@ -127,9 +130,9 @@ if (!element) {
       };
 
       const inventory = [
-        ...proteinsData.map(i => ({ ...i, type: "Proteína" })),
-        ...toppingsData.map(i => ({ ...i, type: "Topping" })),
-        ...extrasData.map(i => ({ ...i, type: "Extra" })),
+        ...INGREDIENTS.proteins.map(i => ({ ...i, type: "Proteína" })),
+        ...INGREDIENTS.toppings.map(i => ({ ...i, type: "Topping" })),
+        ...INGREDIENTS.extras.map(i => ({ ...i, type: "Extra" })),
       ];
 
   const totalCost = calculateTotalCost({
@@ -256,10 +259,32 @@ if (!element) {
             />
           </div>
 
-          <Category title="📏 Tamaño" items={["15", "30"]} selected={size} setSelected={setSize} isSize />
-          <Category title="🥩 Proteínas" items={proteinsData} selected={proteins} setSelected={setProteins} toggle={toggleItem} color="#ef4444" />
-          <Category title="🥬 Toppings" items={toppingsData} selected={toppings} setSelected={setToppings} toggle={toggleItem} color="#22c55e" />
-          <Category title="🧀 Extras" items={extrasData} selected={extras} setSelected={setExtras} toggle={toggleItem} color="#f59e0b" />
+          <Category
+            title="🥩 Proteínas"
+            items={INGREDIENTS.proteins}
+            selected={proteins}
+            setSelected={setProteins}
+            toggle={toggleItem}
+            color="#ef4444"
+          />
+
+          <Category
+            title="🥬 Toppings"
+            items={INGREDIENTS.toppings}
+            selected={toppings}
+            setSelected={setToppings}
+            toggle={toggleItem}
+            color="#22c55e"
+          />
+
+          <Category
+            title="🧀 Extras"
+            items={INGREDIENTS.extras}
+            selected={extras}
+            setSelected={setExtras}
+            toggle={toggleItem}
+            color="#f59e0b"
+          />
 
           <button
   onClick={saveOrder}
