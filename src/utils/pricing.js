@@ -8,7 +8,7 @@ export const itemCost = (item, isProtein = false, isDouble = false) => {
   }
 
   if (isProtein && isDouble) {
-    return base * 2;
+    return base * 1.5;
   }
 
   return base;
@@ -33,10 +33,16 @@ export const calculateTotalCost = ({
     0
   );
 
-  const extrasCost = extras.reduce(
-    (sum, e) => e.price ? sum + itemCost(e) : sum,
-    0
-  );
+  const extrasCost = extras.reduce((sum, e) => {
+      if (e.name === "Queso extra") {
+        return sum + itemCost({
+          price: e.cost,
+          units: e.units,
+          used: e.used
+        });
+      }
+      return sum;
+    }, 0);
 
   return (
     1750 + // pan 15cm fijo

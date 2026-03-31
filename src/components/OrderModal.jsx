@@ -1,19 +1,38 @@
-import { sendWhatsApp } from "../utils/whatsapp";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 export default function OrderModal({ selectedOrder, setSelectedOrder }) {
   if (!selectedOrder) return null;
 
-  const totalCost = selectedOrder.cost 
-  ?? selectedOrder.items?.reduce((acc, i) => acc + (i.cost || 0), 0);
+  // 🔥 Soporte cliente + admin
+  const item = selectedOrder.items?.[0] || selectedOrder;
 
-  const totalPrice = selectedOrder.price 
-    ?? selectedOrder.total 
-    ?? selectedOrder.items?.reduce((acc, i) => acc + (i.price || 0), 0);
+  const totalCost =
+    selectedOrder.cost ??
+    selectedOrder.items?.reduce((acc, i) => acc + (i.cost || 0), 0) ??
+    0;
+
+  const totalPrice =
+    selectedOrder.price ??
+    selectedOrder.total ??
+    selectedOrder.items?.reduce((acc, i) => acc + (i.price || 0), 0) ??
+    0;
 
   const profit = totalPrice - totalCost;
 
+  // 🔥 Estados
+  const updateStatus = async (newStatus) => {
+    try {
+      const ref = doc(db, "orders", selectedOrder.id);
+      await updateDoc(ref, { status: newStatus });
+    } catch (err) {
+      console.error("Error actualizando estado:", err);
+    }
+  };
+
   return (
     <div
+      onClick={() => setSelectedOrder(null)}
       style={{
         position: "fixed",
         inset: 0,
@@ -22,218 +41,174 @@ export default function OrderModal({ selectedOrder, setSelectedOrder }) {
         justifyContent: "center",
         alignItems: "center",
         zIndex: 999,
-        overflowY: "auto",
         padding: 20,
       }}
     >
-      {/* CONTENEDOR */}
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          maxWidth: 600,
+          background: "#020617",
+          padding: 30,
+          borderRadius: 16,
+          width: 400,
+          maxHeight: "90vh",
+          overflowY: "auto",
+          border: "1px solid #1e293b",
         }}
       >
-        {/* 🧾 RECIBO */}
+        {/* HEADER */}
+        <h2 style={{ textAlign: "center" }}>
+          🧾 Pedido #{selectedOrder.orderNumber}
+        </h2>
+
+        <p style={{ textAlign: "center", fontWeight: "bold" }}>
+          {selectedOrder.clientName}
+        </p>
+
+        <p style={{ textAlign: "center", fontSize: 12 }}>
+          📱 {selectedOrder.phone}
+        </p>
+
+        <hr style={{ margin: "15px 0" }} />
+
+        {/* PRODUCTO */}
+        <h3 style={{ color: "#fbbf24" }}>
+          🍞 {selectedOrder.name}
+        </h3>
+
+        <p>📏 {item.size} cm</p>
+
+        {/* BASE */}
+        {item.base?.length > 0 && (
+          <>
+            <p style={{ opacity: 0.7 }}>Base</p>
+            {item.base.map((b, idx) => (
+              <p key={idx}>• {b}</p>
+            ))}
+          </>
+        )}
+
+        {/* PROTEÍNAS */}
+        {item.proteins?.length > 0 && (
+          <>
+            <p style={{ opacity: 0.7 }}>Proteínas</p>
+            {item.proteins.map((p, idx) => {
+              const isDouble = item.extras?.some(
+                (e) => e.name === "Doble proteína"
+              );
+
+              const qty = isDouble ? p.used * 2 : p.used;
+
+              return (
+                <p key={idx}>
+                  • {p.name} x{qty}
+                </p>
+              );
+            })}
+          </>
+        )}
+
+        {/* EXTRAS */}
+        {item.extras?.length > 0 && (
+          <>
+            <p style={{ opacity: 0.7 }}>Extras</p>
+            {item.extras.map((e, idx) => (
+              <p key={idx}>
+                • {e.name === "Doble proteína"
+                  ? "🔥 Doble proteína"
+                  : e.name}
+              </p>
+            ))}
+          </>
+        )}
+
+        <hr />
+
+        {/* 💰 TOTAL CLIENTE */}
+        <h3 style={{ textAlign: "center" }}>
+          Total: ${Math.round(totalPrice).toLocaleString("es-CO")}
+        </h3>
+
+        {/* 💸 NEGOCIO */}
         <div
           style={{
-            display: "flex",
-            gap: 20,
-            background: "#000",
-            padding: 20,
-            borderRadius: 10,
-            flexWrap: "wrap",
-            justifyContent: "center",
-            width: "100%",
+            marginTop: 10,
+            paddingTop: 10,
+            borderTop: "1px solid #1e293b",
           }}
         >
-          {/* 🧾 CLIENTE */}
-          <div
+          <p style={{ fontSize: 13, opacity: 0.8 }}>
+            💸 Tu costo: ${Math.round(totalCost).toLocaleString("es-CO")}
+          </p>
+
+          <p style={{ fontSize: 13, opacity: 0.8 }}>
+            💵 Precio cliente: ${Math.round(totalPrice).toLocaleString("es-CO")}
+          </p>
+
+          <p
             style={{
-              width: "100%",
-              maxWidth: 260,
+              fontWeight: "bold",
+              color: "#22c55e",
+              marginTop: 5,
             }}
           >
-            <h3>🧾 Cliente</h3>
-
-            <p>Orden #{selectedOrder.orderNumber}</p>
-            <p>{selectedOrder.clientName}</p>
-            <p style={{ fontSize: 12 }}>
-              {selectedOrder.date?.toDate?.().toLocaleString?.() || ""}
-            </p>
-
-            <hr />
-
-            <strong>{selectedOrder.name}</strong>
-
-            {/* 🥖 BASE */}
-            <p style={{ marginTop: 10 }}>🥖 Base:</p>
-            {selectedOrder.base?.map((b, i) => (
-              <div key={i}>• {b}</div>
-            ))}
-
-            {/* 🥩 PROTEÍNAS */}
-            {selectedOrder.proteins?.map((i, idx) => {
-              const isDouble = selectedOrder.extras?.some(
-                e => e.name === "Doble proteína"
-              );
-
-              const qty = isDouble ? i.used * 2 : i.used;
-
-              return (
-                <div key={idx}>
-                  • {i.name} x{qty}
-                </div>
-              );
-            })}
-
-            {/* 🥬 TOPPINGS */}
-            {selectedOrder.toppings?.map((i, idx) => (
-              <div key={idx}>• {i.name}</div>
-            ))}
-
-            {/* 🧀 EXTRAS */}
-            {selectedOrder.extras?.map((i, idx) => (
-              <div key={idx}>
-                • {i.name === "Doble proteína"
-                  ? "🔥 Doble proteína"
-                  : i.name}
-              </div>
-            ))}
-
-            <hr />
-
-            <p style={{ fontWeight: "bold" }}>
-              TOTAL: ${totalPrice?.toFixed(0)}
-            </p>
-          </div>
-
-          {/* 💼 VENDEDOR */}
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 260,
-            }}
-          >
-            <h3>💼 Vendedor</h3>
-
-            {/* 🥖 BASE */}
-            <p>🥖 Base:</p>
-            {selectedOrder.base?.map((b, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span>{b}</span>
-                <span>$--</span>
-              </div>
-            ))}
-
-            <strong>{selectedOrder.name}</strong>
-
-            {/* 🥩 PROTEÍNAS */}
-            {selectedOrder.proteins?.map((i, idx) => {
-              const isDouble = selectedOrder.extras?.some(
-                e => e.name === "Doble proteína"
-              );
-
-              const base = (i.price / i.units) * i.used;
-
-              const total = isDouble
-              ? base * 2
-              : base;
-
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>{i.name}</span>
-                  <span>${total.toFixed(0)}</span>
-                </div>
-              );
-            })}
-
-            {/* 🥬 + 🧀 */}
-            {[
-              ...(selectedOrder.toppings || []),
-              ...(selectedOrder.extras || []).filter(
-                (e) => e.name !== "Doble proteína"
-              ),
-            ].map((i, idx) => {
-              const cost = (i.price / i.units) * i.used;
-
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>{i.name}</span>
-                  <span>${cost.toFixed(0)}</span>
-                </div>
-              );
-            })}
-
-            <hr />
-
-            <div style={{ marginTop: 10 }}>
-              <p>💸 Tu costo: ${totalCost?.toFixed(0)}</p>
-              <p>💵 Precio cliente: ${totalPrice?.toFixed(0)}</p>
-
-              <p style={{ fontWeight: "bold", color: "#22c55e" }}>
-                📈 Ganancia: ${profit?.toFixed(0)}
-              </p>
-            </div>            
-          </div>
+            📈 Ganancia: ${Math.round(profit).toLocaleString("es-CO")}
+          </p>
         </div>
 
-        {/* BOTONES */}
+        {/* 🔄 ESTADOS */}
         <div
           style={{
-            marginTop: 15,
+            marginTop: 20,
             display: "flex",
             gap: 10,
-            flexWrap: "wrap",
-            justifyContent: "center",
           }}
         >
           <button
-            onClick={() => setSelectedOrder(null)}
+            onClick={() => updateStatus("pendiente")}
             style={{
+              flex: 1,
               padding: 10,
-              background: "#ef4444",
+              background: "#fbbf24",
               border: "none",
-              borderRadius: 8,
-              color: "white",
+              borderRadius: 10,
+              fontWeight: "bold",
               cursor: "pointer",
             }}
           >
-            ❌ Cerrar
+            🟡 Pendiente
           </button>
 
           <button
-            onClick={() => sendWhatsApp(selectedOrder)}
+            onClick={() => updateStatus("preparando")}
             style={{
+              flex: 1,
               padding: 10,
-              background: "#25D366",
+              background: "#f97316",
               border: "none",
-              borderRadius: 8,
-              color: "white",
+              borderRadius: 10,
+              fontWeight: "bold",
               cursor: "pointer",
+              color: "white",
             }}
           >
-            💬 WhatsApp
+            🟠 Preparando
+          </button>
+
+          <button
+            onClick={() => updateStatus("listo")}
+            style={{
+              flex: 1,
+              padding: 10,
+              background: "#22c55e",
+              border: "none",
+              borderRadius: 10,
+              fontWeight: "bold",
+              cursor: "pointer",
+              color: "white",
+            }}
+          >
+            🟢 Listo
           </button>
         </div>
       </div>

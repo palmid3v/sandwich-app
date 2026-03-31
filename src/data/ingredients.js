@@ -14,9 +14,18 @@ export const INGREDIENTS = {
   ],
 
   extras: [
-    { name: "Queso extra", price: 9990, units: 18, used: 1 },
-    { name: "Doble proteína", price: 0 }
-  ],
+  { 
+    name: "Queso extra", 
+    cost: 9990,   // 🔥 costo real paquete
+    units: 18, 
+    used: 1,
+    price: 1000   // 💰 lo que cobra el cliente
+  },
+  { 
+    name: "Doble proteína", 
+    price: 2500   // 💰 solo venta
+  }
+],
 
   toppings: [
     { name: "Pimentón", price: 6490, grams: 150, usedGrams: 30 }

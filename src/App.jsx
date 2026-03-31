@@ -167,7 +167,17 @@ if (!element) {
   ingredients: INGREDIENTS
 });
 
-  const salePrice = totalCost * (1 + margin);
+        let extraCharges = 0;
+
+      if (extras.some(e => e.name === "Queso extra")) {
+        extraCharges += 1000;
+      }
+
+      if (extras.some(e => e.name === "Doble proteína")) {
+        extraCharges += 2500;
+      }
+
+      const salePrice = (totalCost * 1.75) + extraCharges;
   const hasOrder = proteins.length || toppings.length || extras.length;
 
   const saveOrder = async () => {
@@ -406,7 +416,7 @@ if (!element) {
             <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
               <span>{i.name}</span>
               <span>
-                x{isDoubleProtein ? i.used * 2 : i.used} | ${itemCost(i, true).toFixed(0)}
+                x{isDoubleProtein ? Math.ceil(i.used * 1.5) : i.used} | ${itemCost(i, true).toFixed(0)}
               </span>
             </div>
           ))}
@@ -417,17 +427,33 @@ if (!element) {
             </p>
           )}
 
-          {[...toppings, ...extras.filter(e => e.name !== "Doble proteína")].map(i => (
+          {toppings.map(i => (
             <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
               <span>{i.name}</span>
               <span>${itemCost(i).toFixed(0)}</span>
             </div>
           ))}
 
+          {extras.map(i => {
+            let price = 0;
+
+            if (i.name === "Queso extra") price = 1000;
+            if (i.name === "Doble proteína") price = 2500;
+
+            return (
+              <div key={i.name} style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>
+                  {i.name === "Doble proteína" ? "💪 Versión PRO" : i.name}
+                </span>
+                <span>+${price}</span>
+              </div>
+            );
+          })}
+
           <hr style={{ borderColor: "#1e293b" }} />
 
-          <p>💰 Costo: ${totalCost.toFixed(0)}</p>
-          <p style={{ fontSize: 32, fontWeight: "bold", color: "#22c55e" }}>💵 ${salePrice.toFixed(0)}</p>
+          <p>💰 Costo: ${Math.round(totalCost).toLocaleString("es-CO")}</p>
+          <p style={{ fontSize: 32, fontWeight: "bold", color: "#22c55e" }}>${Math.round(salePrice).toLocaleString("es-CO")}</p>
         </div>
       </div>
       )}
