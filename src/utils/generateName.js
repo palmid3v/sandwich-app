@@ -1,4 +1,4 @@
-const sandwichRules = [ 
+const sandwichRules = [
   {
     match: ["Pepperoni", "Salami", "Chorizo"],
     name: "💣 Carnívoro Extremo",
@@ -28,7 +28,7 @@ export const generateName = (proteins, size, forcedName = null) => {
     return `${forcedName} ${sizeName}`;
   }
 
-  const names = proteins.map(p => p.name);
+  const names = proteins.map((p) => p.name);
 
   let baseName = "🥪 Personalizado";
 
